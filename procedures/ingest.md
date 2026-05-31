@@ -8,12 +8,12 @@ Triggered when the user adds a new source to `raw/` or points you at an existing
 
 1. **Read** the source document fully. If it isn't already in `raw/` as markdown, convert it first (prefer `markitdown`), add the source frontmatter described in `AGENTS.md`, and **move the original into `raw/.orig/`** — never delete it (conversion is lossy; the original is the source of truth).
 
-2. **Stop and propose — write nothing yet.** Present to the user:
+2. **Stop, propose, and yield the turn — write nothing yet.** Present to the user:
    - the **key takeaways** from the source;
    - a **proposed page plan**: which wiki pages you'd create, which existing pages you'd update, and the angle/emphasis you intend to take on each;
    - any **contradictions** with existing pages, and any **judgment calls** (classification, framing, where something belongs) you would otherwise make silently.
 
-   Then **wait** for the user's direction. **Do not create or modify any file in `wiki/` until they respond.** This is the user's one chance to steer the analysis before a large set of edits lands — see Division of labor in `AGENTS.md`.
+   Then **end your turn and wait.** Do not proceed to step 3, and do not call any file-writing tool (Write/Edit/etc.) in the same turn — yield back to the user and wait for their reply. Treat silence or an off-topic reply as a hard stop, never as approval. This is the user's one chance to steer the analysis before a large set of edits lands — see Division of labor in `AGENTS.md`.
 
 3. Once the user has given direction, **write**:
    - a **summary page** for the source;
