@@ -5,27 +5,32 @@
 # Installs AGENTS.md, procedures/, a CLAUDE.md mirror, and the Claude Code
 # shims from this brunnr checkout into a target vault, and seeds a fresh
 # vault skeleton (VAULT.md, raw/, wiki/index.md, wiki/log.md) on first run.
+# Marks the vault with a .brunnr.toml file (ownership + recorded mode).
 #
 # Usage:
 #   brunnr-init [TARGET_DIR]        # default TARGET_DIR = current directory
 #   brunnr-init --copy [TARGET]     # force copy mode
 #   brunnr-init --symlink [TARGET]  # force symlink mode
+#   brunnr-init --force [TARGET]    # overwrite a directory that isn't a brunnr vault
 #
 # By default it symlinks (so kit updates propagate live). If the target
 # filesystem can't create symlinks (e.g. an rclone Google Drive mount) it
-# automatically falls back to copying. Never touches raw/, existing wiki/
-# pages, or an existing VAULT.md.
+# automatically falls back to copying. Refuses to overwrite a directory that
+# isn't already a brunnr vault (no .brunnr.toml) unless --force is given.
+# Never touches raw/, existing wiki/ pages, or an existing VAULT.md.
 
 set -euo pipefail
 
 MODE=auto
+FORCE=0
 TARGET=""
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --copy)    MODE=copy ;;
     --symlink) MODE=symlink ;;
-    -h|--help) sed -n '3,17p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    --force)   FORCE=1 ;;
+    -h|--help) awk 'NR==1{next} /^#/{sub(/^# ?/,""); print; next} {exit}' "$0"; exit 0 ;;
     -*)        echo "brunnr-init: unknown option: $1" >&2; exit 2 ;;
     *)         TARGET="$1" ;;
   esac
@@ -44,6 +49,49 @@ TARGET="$(cd "$TARGET" && pwd)"
 if [ "$TARGET" = "$KIT" ]; then
   echo "brunnr-init: refusing to install into the kit itself ($KIT)" >&2
   exit 2
+fi
+
+# Paths the installer overwrites (relative to TARGET); used by the ownership guard.
+MANAGED=(AGENTS.md CLAUDE.md procedures)
+for d in "$KIT"/shims/claude-code/*/; do [ -d "$d" ] && MANAGED+=(".claude/skills/$(basename "$d")"); done
+
+toml_get() {  # toml_get KEY FILE -> unquoted value (empty if missing)
+  [ -f "$2" ] || return 0
+  sed -n 's/^'"$1"'[[:space:]]*=[[:space:]]*"\{0,1\}\([^"]*\)"\{0,1\}[[:space:]]*$/\1/p' "$2" | head -1
+}
+
+brunnr_owns() {  # may we overwrite path $1? (absent / symlink / brunnr-signed)
+  local p="$1"
+  [ ! -e "$p" ] && return 0
+  [ -L "$p" ] && return 0
+  [ -f "$p" ] && [ "$(head -1 "$p" 2>/dev/null)" = "# Wiki Schema" ] && return 0
+  [ -d "$p" ] && { [ -f "$p/ingest.md" ] || [ -f "$p/SKILL.md" ]; } && return 0
+  return 1
+}
+
+write_marker() {  # (re)write the .brunnr.toml ownership + mode marker
+  local init_date; init_date="$(toml_get initialized "$TARGET/.brunnr.toml")"
+  [ -n "$init_date" ] || init_date="$(date +%F)"
+  cat > "$TARGET/.brunnr.toml" <<EOF
+# Managed by brunnr-init — marks this directory as a brunnr vault. Do not edit.
+install-mode = "$MODE"
+kit = "$KIT"
+initialized = "$init_date"
+updated = "$(date +%F)"
+EOF
+}
+
+# Ownership guard: don't clobber a directory that isn't already a brunnr vault
+# and holds foreign files where we'd install (unless --force).
+if [ "$FORCE" != 1 ] && [ ! -e "$TARGET/.brunnr.toml" ]; then
+  conflicts=()
+  for rel in "${MANAGED[@]}"; do brunnr_owns "$TARGET/$rel" || conflicts+=("$rel"); done
+  if [ "${#conflicts[@]}" -gt 0 ]; then
+    echo "brunnr-init: $TARGET is not a brunnr vault and has files that would be overwritten:" >&2
+    printf '  %s\n' "${conflicts[@]}" >&2
+    echo "Refusing. Re-run with --force to overwrite, or choose an empty / brunnr directory." >&2
+    exit 3
+  fi
 fi
 
 # Decide mode by probing symlink support in the target filesystem.
@@ -87,6 +135,9 @@ mkdir -p "$TARGET/raw" "$TARGET/wiki"
 seed VAULT.md "$TARGET/VAULT.md"
 seed index.md "$TARGET/wiki/index.md"
 seed log.md   "$TARGET/wiki/log.md"
+
+# Mark the vault as brunnr-owned and record the resolved mode.
+write_marker
 
 echo "brunnr-init: done (mode: $MODE)."
 if [ "$MODE" = copy ]; then

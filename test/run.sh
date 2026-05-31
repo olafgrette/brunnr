@@ -52,6 +52,8 @@ check "shim dir is a symlink"           test -L "$V/.claude/skills/wiki-ingest"
 check "VAULT.md is real (seed-once)"    not test -L "$V/VAULT.md"
 check "index.md is real (seed-once)"    not test -L "$V/wiki/index.md"
 check "log.md is real (seed-once)"      not test -L "$V/wiki/log.md"
+check ".brunnr.toml marker written"     test -f "$V/.brunnr.toml"
+check "marker records symlink mode"     grep -q 'install-mode = "symlink"' "$V/.brunnr.toml"
 
 # --- 2. forced copy mode ---------------------------------------------------
 V="$T/cp"; "$INIT" --copy "$V" >/dev/null 2>&1
@@ -61,6 +63,7 @@ check "AGENTS.md is the schema"         h1 "$V/AGENTS.md" "# Wiki Schema"
 check "CLAUDE.md is a regular file"     not test -L "$V/CLAUDE.md"
 check "procedures/ is copied, not link" not test -L "$V/procedures"
 check "procedures/ingest.md present"    test -f "$V/procedures/ingest.md"
+check "marker records copy mode"        grep -q 'install-mode = "copy"' "$V/.brunnr.toml"
 
 # --- 3. idempotency: seed-once preserved, refresh-always refreshed ---------
 # (copy mode so we can safely tamper without editing the kit through a symlink)
@@ -84,6 +87,16 @@ FK="$T/fakekit"; cp -R "$KIT" "$FK"; rm -rf "$FK/.git"
 echo "[self-install guard]"
 check "non-zero exit when target == kit"        not "$FK/bin/brunnr-init" "$FK"
 check "guard left the kit untouched"            not test -e "$FK/VAULT.md"
+
+# --- 5. ownership guard: refuse to clobber a non-brunnr directory ----------
+V="$T/foreign"; mkdir -p "$V"; printf 'my own notes\n' > "$V/AGENTS.md"
+echo "[ownership guard]"
+check "refuses non-brunnr target"           not "$INIT" "$V"
+check "foreign AGENTS.md left intact"       grep -q "my own notes" "$V/AGENTS.md"
+check "no marker written on refusal"        not test -e "$V/.brunnr.toml"
+check "--force overrides the guard"         "$INIT" --force "$V"
+check "schema installed after --force"      h1 "$V/AGENTS.md" "# Wiki Schema"
+check "marker written after --force"        test -f "$V/.brunnr.toml"
 
 # --- summary ---------------------------------------------------------------
 echo
