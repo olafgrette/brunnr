@@ -98,6 +98,16 @@ check "--force overrides the guard"         "$INIT" --force "$V"
 check "schema installed after --force"      h1 "$V/AGENTS.md" "# Wiki Schema"
 check "marker written after --force"        test -f "$V/.brunnr.toml"
 
+# --- 6. install mode is remembered across re-inits -------------------------
+V="$T/sticky"; "$INIT" --copy "$V" >/dev/null 2>&1   # first init records copy
+"$INIT" "$V" >/dev/null 2>&1                          # re-init with no flag
+echo "[mode persistence]"
+check "mode stays copy without a flag"      grep -q 'install-mode = "copy"' "$V/.brunnr.toml"
+check "AGENTS.md still a real file"         not test -L "$V/AGENTS.md"
+"$INIT" --symlink "$V" >/dev/null 2>&1               # explicit flag overrides
+check "--symlink overrides recorded mode"   test -L "$V/AGENTS.md"
+check "marker updated to symlink"           grep -q 'install-mode = "symlink"' "$V/.brunnr.toml"
+
 # --- summary ---------------------------------------------------------------
 echo
 if [ "$fails" -eq 0 ]; then

@@ -15,9 +15,11 @@
 #
 # By default it symlinks (so kit updates propagate live). If the target
 # filesystem can't create symlinks (e.g. an rclone Google Drive mount) it
-# automatically falls back to copying. Refuses to overwrite a directory that
-# isn't already a brunnr vault (no .brunnr.toml) unless --force is given.
-# Never touches raw/, existing wiki/ pages, or an existing VAULT.md.
+# automatically falls back to copying. The chosen mode is recorded in
+# .brunnr.toml and reused on re-init unless you pass --copy/--symlink.
+# Refuses to overwrite a directory that isn't already a brunnr vault
+# (no .brunnr.toml) unless --force is given. Never touches raw/, existing
+# wiki/ pages, or an existing VAULT.md.
 
 set -euo pipefail
 
@@ -94,10 +96,23 @@ if [ "$FORCE" != 1 ] && [ ! -e "$TARGET/.brunnr.toml" ]; then
   fi
 fi
 
-# Decide mode by probing symlink support in the target filesystem.
+# Resolve install mode: explicit flag > mode recorded in .brunnr.toml > auto-probe.
 if [ "$MODE" = auto ]; then
-  probe="$TARGET/.wk-symlink-probe.$$"
-  if ln -s . "$probe" 2>/dev/null; then MODE=symlink; rm -f "$probe"; else MODE=copy; fi
+  recorded="$(toml_get install-mode "$TARGET/.brunnr.toml")"
+  case "$recorded" in copy|symlink) MODE="$recorded" ;; esac
+fi
+
+symlink_ok() {  # does TARGET's filesystem support symlinks?
+  local p="$TARGET/.wk-symlink-probe.$$"
+  if ln -s . "$p" 2>/dev/null; then rm -f "$p"; return 0; fi
+  return 1
+}
+
+if [ "$MODE" = auto ]; then
+  if symlink_ok; then MODE=symlink; else MODE=copy; fi
+elif [ "$MODE" = symlink ] && ! symlink_ok; then
+  echo "brunnr-init: symlink mode unavailable on this filesystem; using copy." >&2
+  MODE=copy
 fi
 
 place() {  # place SRC DEST — refresh DEST from kit SRC (symlink or copy)
