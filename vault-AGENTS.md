@@ -32,7 +32,7 @@ vault/
 markitdown source.html > source.md   # or any other supported format
 ```
 
-After conversion, delete the original non-markdown file. Always include a YAML frontmatter block with the following fields to support ACM-style citations and ingestion tracking:
+After conversion, **preserve the original** — move it into `raw/.orig/` rather than deleting it. Markdown conversion is lossy (it can strip images, mangle tables, or fail silently); the original is the immutable source of truth and the markdown is a readable rendering beside it. Always include a YAML frontmatter block with the following fields to support ACM-style citations and ingestion tracking:
 
 ```yaml
 ---
