@@ -2,41 +2,41 @@
 
 Agent-agnostic schema and operation playbooks for LLM-maintained knowledge wikis, based on Andrej Karpathy's [LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f) pattern.
 
-A **vault** is a directory with `raw/` (immutable sources) and `wiki/` (LLM-maintained pages). This repo holds the shared brain — the schema (`vault-AGENTS.md`), the operation playbooks (`procedures/`), and per-agent shims (`shims/`) — so you can run the same disciplined wiki workflow across many vaults and machines without copy-paste drift.
+A **well** is a directory with `source/` (immutable sources) and `wiki/` (LLM-maintained pages). This repo holds the shared brain — the schema (`well-AGENTS.md`), the operation playbooks (`procedures/`), and per-agent shims (`shims/`) — so you can run the same disciplined wiki workflow across many wells and machines without copy-paste drift.
 
-## Install into a vault
+## Install into a well
 
 ```sh
 git clone https://github.com/<you>/brunnr ~/workspaces/brunnr
-cd /path/to/your/vault
-~/workspaces/brunnr/bin/brunnr-init        # or: brunnr-init /path/to/vault
+cd /path/to/your/well
+~/workspaces/brunnr/bin/brunnr-init        # or: brunnr-init /path/to/well
 ```
 
-`brunnr-init` installs the schema (`vault-AGENTS.md`, placed as the vault's `AGENTS.md`), `procedures/`, a `CLAUDE.md` mirror, and the Claude Code shims into the vault, and seeds `VAULT.md` + an empty `wiki/` skeleton on first run.
+`brunnr-init` installs the schema (`well-AGENTS.md`, placed as the well's `AGENTS.md`), `procedures/`, a `CLAUDE.md` mirror, and the Claude Code shims into the well, and seeds `WELL.md` + an empty `wiki/` skeleton on first run.
 
-- **By default it symlinks**, so kit updates propagate live (`git pull` in the kit and every symlinked vault is current).
-- On filesystems that can't symlink (e.g. an **rclone Google Drive mount**) it **falls back to copying**; re-run `brunnr-init` after updating the kit to refresh copy-mode vaults. The chosen mode is recorded in `.brunnr.toml` and reused on re-init — so a synced vault stays consistent across machines — and you can override with `--symlink` / `--copy`.
-- It stamps each vault with `.brunnr.toml` and **refuses to overwrite a non-brunnr directory** (one with foreign files where it would install) unless you pass `--force`.
-- It **never touches** `raw/`, existing `wiki/` pages, or your `VAULT.md`.
+- **By default it symlinks**, so kit updates propagate live (`git pull` in the kit and every symlinked well is current).
+- On filesystems that can't symlink (e.g. an **rclone Google Drive mount**) it **falls back to copying**; re-run `brunnr-init` after updating the kit to refresh copy-mode wells. The chosen mode is recorded in `.brunnr.toml` and reused on re-init — so a synced well stays consistent across machines — and you can override with `--symlink` / `--copy`.
+- It stamps each well with `.brunnr.toml` and **refuses to overwrite a non-brunnr directory** (one with foreign files where it would install) unless you pass `--force`.
+- It **never touches** `source/`, existing `wiki/` pages, or your `WELL.md`.
 
 ## Layout
 
-| Path | Role | Into a vault? |
+| Path | Role | Into a well? |
 |---|---|---|
 | `AGENTS.md` | Guide for agents working **on brunnr** (this repo). | no |
-| `vault-AGENTS.md` | The schema that becomes each vault's `AGENTS.md`/`CLAUDE.md`: layers, page conventions, division of labor, the operation dispatch table. Read by every agent (Codex natively; Claude Code via the `CLAUDE.md` mirror). | yes — refreshed every init |
+| `well-AGENTS.md` | The schema that becomes each well's `AGENTS.md`/`CLAUDE.md`: layers, page conventions, division of labor, the operation dispatch table. Read by every agent (Codex natively; Claude Code via the `CLAUDE.md` mirror). | yes — refreshed every init |
 | `procedures/{ingest,query,lint}.md` | Step-by-step playbooks. Agents read the relevant one *at the moment they act* — better adherence than burying the steps in always-on context. | yes — refreshed |
 | `shims/claude-code/` | Claude Code skills that delegate to the procedures (slash-command + auto-trigger ergonomics). Thin adapters; the portable truth lives in `procedures/`. Add `shims/<agent>/` for other agents the same way. | yes — refreshed |
-| `templates/{VAULT.md,index.md,log.md}` | Seeds for vault-local files on first init (`{{DATE}}` → today). The vault owns and edits these afterward. | yes — seeded once, never overwritten |
+| `templates/{WELL.md,index.md,log.md}` | Seeds for well-local files on first init (`{{DATE}}` → today). The well owns and edits these afterward. | yes — seeded once, never overwritten |
 | `bin/brunnr-init` | The installer (symlink with copy fallback). | no |
 
-## Shared vs. per-vault
+## Shared vs. per-well
 
-| Shared (this repo) | Per-vault (local, never overwritten) |
+| Shared (this repo) | Per-well (local, never overwritten) |
 |---|---|
-| `vault-AGENTS.md`, `procedures/`, `shims/` | `VAULT.md` (domain & scope), `raw/`, `wiki/` |
+| `well-AGENTS.md`, `procedures/`, `shims/` | `WELL.md` (domain & scope), `source/`, `wiki/` |
 
-Edit the schema **here**, not inside a vault — in-vault copies are regenerated by `brunnr-init`.
+Edit the schema **here**, not inside a well — in-well copies are regenerated by `brunnr-init`.
 
 ## License
 

@@ -1,14 +1,14 @@
 # Wiki Schema
 
-This document defines how an LLM-maintained knowledge wiki is structured and how to operate it. It is **generic and shared across vaults** (managed by [brunnr](./README.md)). **Read this before any operation on the wiki — and also read `VAULT.md` for this vault's specific scope and domain conventions.**
+This document defines how an LLM-maintained knowledge wiki is structured and how to operate it. It is **generic and shared across wells** (managed by [brunnr](./README.md)). **Read this before any operation on the wiki — and also read `WELL.md` for this well's specific scope and domain conventions.**
 
-The pattern is based on Andrej Karpathy's "LLM Wiki" idea: the LLM incrementally builds and maintains a persistent, interlinked markdown knowledge base instead of re-deriving knowledge from raw sources on every query. The wiki is a compounding artifact — cross-references already exist, contradictions are already flagged, the synthesis already reflects everything read.
+The pattern is based on Andrej Karpathy's "LLM Wiki" idea: the LLM incrementally builds and maintains a persistent, interlinked markdown knowledge base instead of re-deriving knowledge from sources on every query. The wiki is a compounding artifact — cross-references already exist, contradictions are already flagged, the synthesis already reflects everything read.
 
 ## Directory structure
 
 ```
-vault/
-├── raw/              # Immutable source documents — read only, never modify
+well/
+├── source/              # Immutable source documents — read only, never modify
 ├── wiki/             # LLM-maintained knowledge pages — you write this layer
 │   ├── index.md      # Master catalog of all wiki pages
 │   └── log.md        # Append-only operation log
@@ -17,23 +17,23 @@ vault/
 │   ├── query.md
 │   └── lint.md
 ├── AGENTS.md         # This file — generic schema (from brunnr)
-├── VAULT.md          # This vault's scope & domain notes (local; never from brunnr)
+├── WELL.md          # This well's scope & domain notes (local; never from brunnr)
 ├── CLAUDE.md         # Mirror of AGENTS.md (symlink, or copy where symlinks aren't supported)
-├── .brunnr.toml      # Marks this as a brunnr vault + records install mode (managed by brunnr-init)
+├── .brunnr.toml      # Marks this as a brunnr well + records install mode (managed by brunnr-init)
 └── .claude/skills/   # Optional Claude Code shims that delegate to procedures/ (from brunnr)
 ```
 
 ## Layers
 
-**raw/** — curated source material. Notes, articles, exports, transcripts, images. Immutable. You read these; you never modify them. This is the source of truth. Subdirectories are fine and mirror the original structure of sources.
+**source/** — curated source material. Notes, articles, exports, transcripts, images. Immutable. You read these; you never modify them. This is the source of truth. Subdirectories are fine and mirror the original structure of sources.
 
-**Raw file format convention**: When saving a source to `raw/`, prefer markdown over binary or HTML formats. Use `markitdown` if it's available — it handles HTML, PDF, DOCX, PPTX, images, and most common formats in one command. If it isn't installed, tell the user and ask how they'd like to convert (or to install it) rather than guessing at the content:
+**Source file format convention**: When saving a source to `source/`, prefer markdown over binary or HTML formats. Use `markitdown` if it's available — it handles HTML, PDF, DOCX, PPTX, images, and most common formats in one command. If it isn't installed, tell the user and ask how they'd like to convert (or to install it) rather than guessing at the content:
 
 ```bash
 markitdown source.html > source.md   # or any other supported format
 ```
 
-After conversion, **preserve the original** — move it into `raw/.orig/` rather than deleting it. Markdown conversion is lossy (it can strip images, mangle tables, or fail silently); the original is the immutable source of truth and the markdown is a readable rendering beside it. Always include a YAML frontmatter block with the following fields to support ACM-style citations and ingestion tracking:
+After conversion, **preserve the original** — move it into `source/.orig/` rather than deleting it. Markdown conversion is lossy (it can strip images, mangle tables, or fail silently); the original is the immutable source of truth and the markdown is a readable rendering beside it. Always include a YAML frontmatter block with the following fields to support ACM-style citations and ingestion tracking:
 
 ```yaml
 ---
@@ -55,13 +55,13 @@ ingested_at: YYYY-MM-DD
 Article body...
 ```
 
-This makes raw files readable by future agents doing wiki linting or ingestion without needing format-specific parsers.
+This makes source files readable by future agents doing wiki linting or ingestion without needing format-specific parsers.
 
 **wiki/** — your output layer. Summaries, entity pages, concept pages, comparisons, syntheses. You write and maintain everything here. The human reads this layer; the LLM writes it.
 
-**AGENTS.md** (this file) — the generic schema, shared across vaults via brunnr. **Don't edit it inside a vault** — your changes are overwritten on the next `brunnr-init`. Edit it in the brunnr repo instead. Vault-specific conventions belong in `VAULT.md`.
+**AGENTS.md** (this file) — the generic schema, shared across wells via brunnr. **Don't edit it inside a well** — your changes are overwritten on the next `brunnr-init`. Edit it in the brunnr repo instead. Well-specific conventions belong in `WELL.md`.
 
-**VAULT.md** — this vault's domain: what it's about, its categories, any vault-specific conventions or scope notes. Local to the vault, never overwritten by brunnr. Read it alongside this file before any operation.
+**WELL.md** — this well's domain: what it's about, its categories, any well-specific conventions or scope notes. Local to the well, never overwritten by brunnr. Read it alongside this file before any operation.
 
 ## Page conventions
 
@@ -99,7 +99,7 @@ Each operation has a **playbook** in `procedures/`. **Before performing an opera
 
 | When the user… | Read & follow |
 |---|---|
-| adds a source to `raw/`, or says "ingest this" | `procedures/ingest.md` |
+| adds a source to `source/`, or says "ingest this" | `procedures/ingest.md` |
 | asks a question the wiki should answer | `procedures/query.md` |
 | asks to health-check / audit / lint the wiki | `procedures/lint.md` |
 
@@ -137,7 +137,7 @@ grep "^## \[" wiki/log.md | tail -10
 
 ## Notes
 
-- The wiki is just markdown files. Where the vault is a git repo, you get version history and branching for free; where it's a synced folder (e.g. Google Drive), sync handles propagation across machines.
+- The wiki is just markdown files. Where the well is a git repo, you get version history and branching for free; where it's a synced folder (e.g. Google Drive), sync handles propagation across machines.
 - Obsidian's graph view is the best way to see the shape of the wiki — hubs, orphans, clusters.
-- When in doubt about where something belongs, create a new wiki page rather than modifying a raw source.
+- When in doubt about where something belongs, create a new wiki page rather than modifying a source.
 - Good answers to queries are worth filing as wiki pages — explorations should compound, not disappear into chat history.

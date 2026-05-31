@@ -1,25 +1,25 @@
 #!/usr/bin/env bash
 #
-# brunnr-init — install the brunnr schema into a vault directory.
+# brunnr-init — install the brunnr schema into a well directory.
 #
 # Installs AGENTS.md, procedures/, a CLAUDE.md mirror, and the Claude Code
-# shims from this brunnr checkout into a target vault, and seeds a fresh
-# vault skeleton (VAULT.md, raw/, wiki/index.md, wiki/log.md) on first run.
-# Marks the vault with a .brunnr.toml file (ownership + recorded mode).
+# shims from this brunnr checkout into a target well, and seeds a fresh
+# well skeleton (WELL.md, source/, wiki/index.md, wiki/log.md) on first run.
+# Marks the well with a .brunnr.toml file (ownership + recorded mode).
 #
 # Usage:
 #   brunnr-init [TARGET_DIR]        # default TARGET_DIR = current directory
 #   brunnr-init --copy [TARGET]     # force copy mode
 #   brunnr-init --symlink [TARGET]  # force symlink mode
-#   brunnr-init --force [TARGET]    # overwrite a directory that isn't a brunnr vault
+#   brunnr-init --force [TARGET]    # overwrite a directory that isn't a brunnr well
 #
 # By default it symlinks (so kit updates propagate live). If the target
 # filesystem can't create symlinks (e.g. an rclone Google Drive mount) it
 # automatically falls back to copying. The chosen mode is recorded in
 # .brunnr.toml and reused on re-init unless you pass --copy/--symlink.
-# Refuses to overwrite a directory that isn't already a brunnr vault
-# (no .brunnr.toml) unless --force is given. Never touches raw/, existing
-# wiki/ pages, or an existing VAULT.md.
+# Refuses to overwrite a directory that isn't already a brunnr well
+# (no .brunnr.toml) unless --force is given. Never touches source/, existing
+# wiki/ pages, or an existing WELL.md.
 
 set -euo pipefail
 
@@ -75,7 +75,7 @@ write_marker() {  # (re)write the .brunnr.toml ownership + mode marker
   local init_date; init_date="$(toml_get initialized "$TARGET/.brunnr.toml")"
   [ -n "$init_date" ] || init_date="$(date +%F)"
   cat > "$TARGET/.brunnr.toml" <<EOF
-# Managed by brunnr-init — marks this directory as a brunnr vault. Do not edit.
+# Managed by brunnr-init — marks this directory as a brunnr well. Do not edit.
 install-mode = "$MODE"
 kit = "$KIT"
 initialized = "$init_date"
@@ -83,13 +83,13 @@ updated = "$(date +%F)"
 EOF
 }
 
-# Ownership guard: don't clobber a directory that isn't already a brunnr vault
+# Ownership guard: don't clobber a directory that isn't already a brunnr well
 # and holds foreign files where we'd install (unless --force).
 if [ "$FORCE" != 1 ] && [ ! -e "$TARGET/.brunnr.toml" ]; then
   conflicts=()
   for rel in "${MANAGED[@]}"; do brunnr_owns "$TARGET/$rel" || conflicts+=("$rel"); done
   if [ "${#conflicts[@]}" -gt 0 ]; then
-    echo "brunnr-init: $TARGET is not a brunnr vault and has files that would be overwritten:" >&2
+    echo "brunnr-init: $TARGET is not a brunnr well and has files that would be overwritten:" >&2
     printf '  %s\n' "${conflicts[@]}" >&2
     echo "Refusing. Re-run with --force to overwrite, or choose an empty / brunnr directory." >&2
     exit 3
@@ -131,12 +131,12 @@ seed() {  # seed TEMPLATE DEST — render templates/TEMPLATE into DEST if absent
 echo "brunnr-init: installing into $TARGET  (mode: $MODE, kit: $KIT)"
 
 # --- Schema owned by the kit (always refreshed) ---
-place "$KIT/vault-AGENTS.md" "$TARGET/AGENTS.md"
+place "$KIT/well-AGENTS.md" "$TARGET/AGENTS.md"
 place "$KIT/procedures" "$TARGET/procedures"
 
 # CLAUDE.md mirrors AGENTS.md so Claude Code picks up the schema.
 rm -f "$TARGET/CLAUDE.md"
-if [ "$MODE" = symlink ]; then ln -s AGENTS.md "$TARGET/CLAUDE.md"; else cp "$KIT/vault-AGENTS.md" "$TARGET/CLAUDE.md"; fi
+if [ "$MODE" = symlink ]; then ln -s AGENTS.md "$TARGET/CLAUDE.md"; else cp "$KIT/well-AGENTS.md" "$TARGET/CLAUDE.md"; fi
 
 # Claude Code shims — each skill delegates to procedures/.
 mkdir -p "$TARGET/.claude/skills"
@@ -145,16 +145,16 @@ for d in "$KIT"/shims/claude-code/*/; do
   place "${d%/}" "$TARGET/.claude/skills/$(basename "$d")"
 done
 
-# --- Vault-local files: seeded from templates/ on first run, never overwritten ---
-mkdir -p "$TARGET/raw" "$TARGET/wiki"
-seed VAULT.md "$TARGET/VAULT.md"
+# --- Well-local files: seeded from templates/ on first run, never overwritten ---
+mkdir -p "$TARGET/source" "$TARGET/wiki"
+seed WELL.md "$TARGET/WELL.md"
 seed index.md "$TARGET/wiki/index.md"
 seed log.md   "$TARGET/wiki/log.md"
 
-# Mark the vault as brunnr-owned and record the resolved mode.
+# Mark the well as brunnr-owned and record the resolved mode.
 write_marker
 
 echo "brunnr-init: done (mode: $MODE)."
 if [ "$MODE" = copy ]; then
-  echo "  note: copy mode — re-run brunnr-init after updating the kit to refresh this vault."
+  echo "  note: copy mode — re-run brunnr-init after updating the kit to refresh this well."
 fi
