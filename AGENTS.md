@@ -36,5 +36,5 @@ The lifecycle split is the key invariant: **refresh-always** files are kit-owned
 
 - Keep `vault-AGENTS.md` and `procedures/` **agent-agnostic** — no Claude- or Codex-specific instructions. Vendor specifics live only in `shims/`.
 - The installer must stay **idempotent** and must never touch a vault's `raw/`, existing `wiki/` pages, or `VAULT.md`.
-- Test installer changes against a throwaway dir in **both** modes (default symlink and `--copy`) before relying on them.
+- Run `test/run.sh` after any installer change — it installs into throwaway dirs and asserts the contract in both symlink and copy modes (schema placement, seeding, `{{DATE}}` rendering, idempotency, the symlink/seed-once split, and the self-install guard). Add a case there when you change install behavior.
 - After changing anything that's installed, remember: vaults on copy-mode filesystems (e.g. rclone gdrive) need a `brunnr-init` re-run to pick it up; symlinked vaults are already live.
