@@ -1,0 +1,132 @@
+#!/usr/bin/env bash
+#
+# wiki-kit-init — install the wiki-kit schema into a vault directory.
+#
+# Installs AGENTS.md, procedures/, a CLAUDE.md mirror, and the Claude Code
+# shims from this wiki-kit checkout into a target vault, and seeds a fresh
+# vault skeleton (VAULT.md, raw/, wiki/index.md, wiki/log.md) on first run.
+#
+# Usage:
+#   wiki-kit-init [TARGET_DIR]        # default TARGET_DIR = current directory
+#   wiki-kit-init --copy [TARGET]     # force copy mode
+#   wiki-kit-init --symlink [TARGET]  # force symlink mode
+#
+# By default it symlinks (so kit updates propagate live). If the target
+# filesystem can't create symlinks (e.g. an rclone Google Drive mount) it
+# automatically falls back to copying. Never touches raw/, existing wiki/
+# pages, or an existing VAULT.md.
+
+set -euo pipefail
+
+MODE=auto
+TARGET=""
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --copy)    MODE=copy ;;
+    --symlink) MODE=symlink ;;
+    -h|--help) sed -n '3,17p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -*)        echo "wiki-kit-init: unknown option: $1" >&2; exit 2 ;;
+    *)         TARGET="$1" ;;
+  esac
+  shift
+done
+
+# Resolve the kit root (parent of the dir holding this script), following symlinks.
+SELF="$0"
+while [ -L "$SELF" ]; do SELF="$(readlink "$SELF")"; done
+KIT="$(cd "$(dirname "$SELF")/.." && pwd)"
+
+TARGET="${TARGET:-$PWD}"
+mkdir -p "$TARGET"
+TARGET="$(cd "$TARGET" && pwd)"
+
+if [ "$TARGET" = "$KIT" ]; then
+  echo "wiki-kit-init: refusing to install into the kit itself ($KIT)" >&2
+  exit 2
+fi
+
+# Decide mode by probing symlink support in the target filesystem.
+if [ "$MODE" = auto ]; then
+  probe="$TARGET/.wk-symlink-probe.$$"
+  if ln -s . "$probe" 2>/dev/null; then MODE=symlink; rm -f "$probe"; else MODE=copy; fi
+fi
+
+place() {  # place SRC DEST — refresh DEST from kit SRC (symlink or copy)
+  local src="$1" dest="$2"
+  rm -rf "$dest"
+  if [ "$MODE" = symlink ]; then ln -s "$src" "$dest"; else cp -R "$src" "$dest"; fi
+}
+
+echo "wiki-kit-init: installing into $TARGET  (mode: $MODE, kit: $KIT)"
+
+# --- Schema owned by the kit (always refreshed) ---
+place "$KIT/AGENTS.md"  "$TARGET/AGENTS.md"
+place "$KIT/procedures" "$TARGET/procedures"
+
+# CLAUDE.md mirrors AGENTS.md so Claude Code picks up the schema.
+rm -f "$TARGET/CLAUDE.md"
+if [ "$MODE" = symlink ]; then ln -s AGENTS.md "$TARGET/CLAUDE.md"; else cp "$KIT/AGENTS.md" "$TARGET/CLAUDE.md"; fi
+
+# Claude Code shims — each skill delegates to procedures/.
+mkdir -p "$TARGET/.claude/skills"
+for d in "$KIT"/shims/claude-code/*/; do
+  [ -d "$d" ] || continue
+  place "${d%/}" "$TARGET/.claude/skills/$(basename "$d")"
+done
+
+# --- Vault-local files: created once on first run, never overwritten ---
+mkdir -p "$TARGET/raw" "$TARGET/wiki"
+
+if [ ! -e "$TARGET/VAULT.md" ]; then
+  cat > "$TARGET/VAULT.md" <<'EOF'
+# This vault
+
+_One or two sentences: what this vault is about and who/what it covers._
+
+## Scope
+
+- What belongs here:
+- What doesn't:
+
+## Categories
+
+_Vault-specific index categories and tag conventions, if any (beyond the generic schema)._
+
+## Domain notes
+
+_Anything an agent should know about this vault's subject matter before operating on it._
+EOF
+  echo "  + VAULT.md (stub — fill it in)"
+fi
+
+if [ ! -e "$TARGET/wiki/index.md" ]; then
+  cat > "$TARGET/wiki/index.md" <<EOF
+# Index
+
+_Last updated: $(date +%F). 0 sources ingested._
+
+## Meta
+
+- [Log](./log.md) — operation history
+EOF
+  echo "  + wiki/index.md"
+fi
+
+if [ ! -e "$TARGET/wiki/log.md" ]; then
+  cat > "$TARGET/wiki/log.md" <<EOF
+# Log
+
+Append-only record of wiki operations. Grep with: \`grep "^## \\[" wiki/log.md | tail -10\`
+
+---
+
+## [$(date +%F)] init | Vault initialized from wiki-kit
+EOF
+  echo "  + wiki/log.md"
+fi
+
+echo "wiki-kit-init: done (mode: $MODE)."
+if [ "$MODE" = copy ]; then
+  echo "  note: copy mode — re-run wiki-kit-init after updating the kit to refresh this vault."
+fi
