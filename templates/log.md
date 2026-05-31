@@ -4,4 +4,4 @@ Append-only record of wiki operations. Grep with: `grep "^## \[" wiki/log.md | t
 
 ---
 
-## [{{DATE}}] init | Vault initialized from wiki-kit
+## [{{DATE}}] init | Vault initialized from brunnr

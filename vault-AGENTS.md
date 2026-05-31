@@ -1,6 +1,6 @@
 # Wiki Schema
 
-This document defines how an LLM-maintained knowledge wiki is structured and how to operate it. It is **generic and shared across vaults** (managed by [wiki-kit](./README.md)). **Read this before any operation on the wiki — and also read `VAULT.md` for this vault's specific scope and domain conventions.**
+This document defines how an LLM-maintained knowledge wiki is structured and how to operate it. It is **generic and shared across vaults** (managed by [brunnr](./README.md)). **Read this before any operation on the wiki — and also read `VAULT.md` for this vault's specific scope and domain conventions.**
 
 The pattern is based on Andrej Karpathy's "LLM Wiki" idea: the LLM incrementally builds and maintains a persistent, interlinked markdown knowledge base instead of re-deriving knowledge from raw sources on every query. The wiki is a compounding artifact — cross-references already exist, contradictions are already flagged, the synthesis already reflects everything read.
 
@@ -12,14 +12,14 @@ vault/
 ├── wiki/             # LLM-maintained knowledge pages — you write this layer
 │   ├── index.md      # Master catalog of all wiki pages
 │   └── log.md        # Append-only operation log
-├── procedures/       # Operation playbooks — read the relevant one before acting (from wiki-kit)
+├── procedures/       # Operation playbooks — read the relevant one before acting (from brunnr)
 │   ├── ingest.md
 │   ├── query.md
 │   └── lint.md
-├── AGENTS.md         # This file — generic schema (from wiki-kit)
-├── VAULT.md          # This vault's scope & domain notes (local; never from wiki-kit)
+├── AGENTS.md         # This file — generic schema (from brunnr)
+├── VAULT.md          # This vault's scope & domain notes (local; never from brunnr)
 ├── CLAUDE.md         # Mirror of AGENTS.md (symlink, or copy where symlinks aren't supported)
-└── .claude/skills/   # Optional Claude Code shims that delegate to procedures/ (from wiki-kit)
+└── .claude/skills/   # Optional Claude Code shims that delegate to procedures/ (from brunnr)
 ```
 
 ## Layers
@@ -58,9 +58,9 @@ This makes raw files readable by future agents doing wiki linting or ingestion w
 
 **wiki/** — your output layer. Summaries, entity pages, concept pages, comparisons, syntheses. You write and maintain everything here. The human reads this layer; the LLM writes it.
 
-**AGENTS.md** (this file) — the generic schema, shared across vaults via wiki-kit. **Don't edit it inside a vault** — your changes are overwritten on the next `wiki-kit-init`. Edit it in the wiki-kit repo instead. Vault-specific conventions belong in `VAULT.md`.
+**AGENTS.md** (this file) — the generic schema, shared across vaults via brunnr. **Don't edit it inside a vault** — your changes are overwritten on the next `brunnr-init`. Edit it in the brunnr repo instead. Vault-specific conventions belong in `VAULT.md`.
 
-**VAULT.md** — this vault's domain: what it's about, its categories, any vault-specific conventions or scope notes. Local to the vault, never overwritten by wiki-kit. Read it alongside this file before any operation.
+**VAULT.md** — this vault's domain: what it's about, its categories, any vault-specific conventions or scope notes. Local to the vault, never overwritten by brunnr. Read it alongside this file before any operation.
 
 ## Page conventions
 

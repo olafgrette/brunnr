@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 #
-# wiki-kit-init — install the wiki-kit schema into a vault directory.
+# brunnr-init — install the brunnr schema into a vault directory.
 #
 # Installs AGENTS.md, procedures/, a CLAUDE.md mirror, and the Claude Code
-# shims from this wiki-kit checkout into a target vault, and seeds a fresh
+# shims from this brunnr checkout into a target vault, and seeds a fresh
 # vault skeleton (VAULT.md, raw/, wiki/index.md, wiki/log.md) on first run.
 #
 # Usage:
-#   wiki-kit-init [TARGET_DIR]        # default TARGET_DIR = current directory
-#   wiki-kit-init --copy [TARGET]     # force copy mode
-#   wiki-kit-init --symlink [TARGET]  # force symlink mode
+#   brunnr-init [TARGET_DIR]        # default TARGET_DIR = current directory
+#   brunnr-init --copy [TARGET]     # force copy mode
+#   brunnr-init --symlink [TARGET]  # force symlink mode
 #
 # By default it symlinks (so kit updates propagate live). If the target
 # filesystem can't create symlinks (e.g. an rclone Google Drive mount) it
@@ -26,7 +26,7 @@ while [ $# -gt 0 ]; do
     --copy)    MODE=copy ;;
     --symlink) MODE=symlink ;;
     -h|--help) sed -n '3,17p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
-    -*)        echo "wiki-kit-init: unknown option: $1" >&2; exit 2 ;;
+    -*)        echo "brunnr-init: unknown option: $1" >&2; exit 2 ;;
     *)         TARGET="$1" ;;
   esac
   shift
@@ -42,7 +42,7 @@ mkdir -p "$TARGET"
 TARGET="$(cd "$TARGET" && pwd)"
 
 if [ "$TARGET" = "$KIT" ]; then
-  echo "wiki-kit-init: refusing to install into the kit itself ($KIT)" >&2
+  echo "brunnr-init: refusing to install into the kit itself ($KIT)" >&2
   exit 2
 fi
 
@@ -65,7 +65,7 @@ seed() {  # seed TEMPLATE DEST — render templates/TEMPLATE into DEST if absent
   echo "  + ${dest#"$TARGET"/}"
 }
 
-echo "wiki-kit-init: installing into $TARGET  (mode: $MODE, kit: $KIT)"
+echo "brunnr-init: installing into $TARGET  (mode: $MODE, kit: $KIT)"
 
 # --- Schema owned by the kit (always refreshed) ---
 place "$KIT/vault-AGENTS.md" "$TARGET/AGENTS.md"
@@ -88,7 +88,7 @@ seed VAULT.md "$TARGET/VAULT.md"
 seed index.md "$TARGET/wiki/index.md"
 seed log.md   "$TARGET/wiki/log.md"
 
-echo "wiki-kit-init: done (mode: $MODE)."
+echo "brunnr-init: done (mode: $MODE)."
 if [ "$MODE" = copy ]; then
-  echo "  note: copy mode — re-run wiki-kit-init after updating the kit to refresh this vault."
+  echo "  note: copy mode — re-run brunnr-init after updating the kit to refresh this vault."
 fi
