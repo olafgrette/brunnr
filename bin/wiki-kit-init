@@ -58,6 +58,13 @@ place() {  # place SRC DEST — refresh DEST from kit SRC (symlink or copy)
   if [ "$MODE" = symlink ]; then ln -s "$src" "$dest"; else cp -R "$src" "$dest"; fi
 }
 
+seed() {  # seed TEMPLATE DEST — render templates/TEMPLATE into DEST if absent ({{DATE}} -> today)
+  local tpl="$KIT/templates/$1" dest="$2"
+  [ -e "$dest" ] && return 0
+  sed "s/{{DATE}}/$(date +%F)/g" "$tpl" > "$dest"
+  echo "  + ${dest#"$TARGET"/}"
+}
+
 echo "wiki-kit-init: installing into $TARGET  (mode: $MODE, kit: $KIT)"
 
 # --- Schema owned by the kit (always refreshed) ---
@@ -75,56 +82,11 @@ for d in "$KIT"/shims/claude-code/*/; do
   place "${d%/}" "$TARGET/.claude/skills/$(basename "$d")"
 done
 
-# --- Vault-local files: created once on first run, never overwritten ---
+# --- Vault-local files: seeded from templates/ on first run, never overwritten ---
 mkdir -p "$TARGET/raw" "$TARGET/wiki"
-
-if [ ! -e "$TARGET/VAULT.md" ]; then
-  cat > "$TARGET/VAULT.md" <<'EOF'
-# This vault
-
-_One or two sentences: what this vault is about and who/what it covers._
-
-## Scope
-
-- What belongs here:
-- What doesn't:
-
-## Categories
-
-_Vault-specific index categories and tag conventions, if any (beyond the generic schema)._
-
-## Domain notes
-
-_Anything an agent should know about this vault's subject matter before operating on it._
-EOF
-  echo "  + VAULT.md (stub — fill it in)"
-fi
-
-if [ ! -e "$TARGET/wiki/index.md" ]; then
-  cat > "$TARGET/wiki/index.md" <<EOF
-# Index
-
-_Last updated: $(date +%F). 0 sources ingested._
-
-## Meta
-
-- [Log](./log.md) — operation history
-EOF
-  echo "  + wiki/index.md"
-fi
-
-if [ ! -e "$TARGET/wiki/log.md" ]; then
-  cat > "$TARGET/wiki/log.md" <<EOF
-# Log
-
-Append-only record of wiki operations. Grep with: \`grep "^## \\[" wiki/log.md | tail -10\`
-
----
-
-## [$(date +%F)] init | Vault initialized from wiki-kit
-EOF
-  echo "  + wiki/log.md"
-fi
+seed VAULT.md "$TARGET/VAULT.md"
+seed index.md "$TARGET/wiki/index.md"
+seed log.md   "$TARGET/wiki/log.md"
 
 echo "wiki-kit-init: done (mode: $MODE)."
 if [ "$MODE" = copy ]; then

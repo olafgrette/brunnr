@@ -25,6 +25,7 @@ cd /path/to/your/vault
 | `AGENTS.md` | Generic schema: layers, page conventions, division of labor, the operation dispatch table. Read by every agent (Codex natively; Claude Code via the `CLAUDE.md` mirror). |
 | `procedures/{ingest,query,lint}.md` | Step-by-step playbooks. Agents read the relevant one *at the moment they act* — better adherence than burying the steps in always-on context. |
 | `shims/claude-code/` | Claude Code skills that delegate to the procedures (slash-command + auto-trigger ergonomics). Thin adapters; the portable truth lives in `procedures/`. Add `shims/<agent>/` for other agents the same way. |
+| `templates/{VAULT.md,index.md,log.md}` | Seeds for vault-local files on first init (`{{DATE}}` → today). Edit these to change what a fresh vault starts with. |
 | `bin/wiki-kit-init` | The installer. |
 
 ## Shared vs. per-vault
