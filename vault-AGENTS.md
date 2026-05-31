@@ -19,6 +19,7 @@ vault/
 ├── AGENTS.md         # This file — generic schema (from brunnr)
 ├── VAULT.md          # This vault's scope & domain notes (local; never from brunnr)
 ├── CLAUDE.md         # Mirror of AGENTS.md (symlink, or copy where symlinks aren't supported)
+├── .brunnr.toml      # Marks this as a brunnr vault + records install mode (managed by brunnr-init)
 └── .claude/skills/   # Optional Claude Code shims that delegate to procedures/ (from brunnr)
 ```
 

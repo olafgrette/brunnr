@@ -15,7 +15,8 @@ cd /path/to/your/vault
 `brunnr-init` installs the schema (`vault-AGENTS.md`, placed as the vault's `AGENTS.md`), `procedures/`, a `CLAUDE.md` mirror, and the Claude Code shims into the vault, and seeds `VAULT.md` + an empty `wiki/` skeleton on first run.
 
 - **By default it symlinks**, so kit updates propagate live (`git pull` in the kit and every symlinked vault is current).
-- On filesystems that can't symlink (e.g. an **rclone Google Drive mount**) it **automatically falls back to copying** — re-run `brunnr-init` after updating the kit to refresh those vaults. Force a mode with `--symlink` / `--copy`.
+- On filesystems that can't symlink (e.g. an **rclone Google Drive mount**) it **falls back to copying**; re-run `brunnr-init` after updating the kit to refresh copy-mode vaults. The chosen mode is recorded in `.brunnr.toml` and reused on re-init — so a synced vault stays consistent across machines — and you can override with `--symlink` / `--copy`.
+- It stamps each vault with `.brunnr.toml` and **refuses to overwrite a non-brunnr directory** (one with foreign files where it would install) unless you pass `--force`.
 - It **never touches** `raw/`, existing `wiki/` pages, or your `VAULT.md`.
 
 ## Layout
