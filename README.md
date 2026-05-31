@@ -1,6 +1,6 @@
 # brunnr
 
-Agent-agnostic schema and operation playbooks for LLM-maintained knowledge wikis, based on Andrej Karpathy's [LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f) pattern.
+Agent-agnostic schema and operation playbooks for LLM-maintained knowledge wikis, based on Andrej Karpathy's [LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f) pattern. For my own personal use, but posted publicly. I don't expect anyone else to use this and defaults/evolution/improvements will be for explicitly my workflow.
 
 A **well** is a directory with `source/` (immutable sources) and `wiki/` (LLM-maintained pages). This repo holds the shared brain — the schema (`well-AGENTS.md`), the operation playbooks (`procedures/`), and per-agent shims (`shims/`) — so you can run the same disciplined wiki workflow across many wells and machines without copy-paste drift.
 
