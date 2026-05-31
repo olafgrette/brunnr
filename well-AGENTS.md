@@ -55,6 +55,23 @@ ingested_at: YYYY-MM-DD
 Article body...
 ```
 
+**Pointer Sources**: For large or highly dynamic resources (like software repositories or live individual code files) that cannot or should not be fully copied and converted, use a "Pointer Source". A pointer source is a markdown file in `source/` that acts as a proxy, containing a high-level snapshot or architectural/functional summary rather than verbatim contents. It MUST include specific frontmatter to track the external state:
+
+```yaml
+---
+title: "Project Brunnr Codebase"
+source_type: repository # or live_file
+url: "https://github.com/olaf/brunnr" # if applicable
+path: "/home/olaf/workspaces/brunnr"  # local path if applicable
+tracked_commit: "a1b2c3d"             # git commit hash (or file hash) at time of ingestion
+ingested_at: YYYY-MM-DD
+---
+
+# Snapshot Summary
+
+[A high-level architectural and/or functional summary or structural overview generated during ingestion, acting as the foundation for the wiki layer.]
+```
+
 This makes source files readable by future agents doing wiki linting or ingestion without needing format-specific parsers.
 
 **wiki/** — your output layer. Summaries, entity pages, concept pages, comparisons, syntheses. You write and maintain everything here. The human reads this layer; the LLM writes it.
@@ -100,6 +117,7 @@ Each operation has a **playbook** in `procedures/`. **Before performing an opera
 | When the user… | Read & follow |
 |---|---|
 | adds a source to `source/`, or says "ingest this" | `procedures/ingest.md` |
+| asks to update an existing dynamic source (like a repo) | `procedures/sync.md` |
 | asks a question the wiki should answer | `procedures/query.md` |
 | asks to health-check / audit / lint the wiki | `procedures/lint.md` |
 

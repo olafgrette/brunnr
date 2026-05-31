@@ -6,7 +6,9 @@ Triggered when the user adds a new source to `source/` or points you at an exist
 
 ## Steps
 
-1. **Read** the source document fully. If it isn't already in `source/` as markdown, convert it first (prefer `markitdown` if it's installed — otherwise ask the user rather than improvising), add the source frontmatter described in `AGENTS.md`, and **move the original into `source/.orig/`** — never delete it (conversion is lossy; the original is the source of truth).
+1. **Read** the source document fully. 
+   - **Static Sources:** If it isn't already in `source/` as markdown, convert it first (prefer `markitdown` if it's installed — otherwise ask the user rather than improvising), add the source frontmatter described in `AGENTS.md`, and **move the original into `source/.orig/`** — never delete it (conversion is lossy; the original is the source of truth).
+   - **Dynamic/Large Sources (e.g., Repositories, live files):** Do not copy the entire resource. Instead, create a **Pointer Source** in `source/` (e.g., `source/my-repo.md`). Perform a high-level analysis of the external resource (using tree, reading readmes, or exploring structure) to generate an architectural/functional or structural snapshot. Populate the file with the required Pointer frontmatter (including `tracked_commit` or file hash) and write the snapshot into the body.
 
 2. **Stop, propose, and yield the turn — write nothing yet.** Present to the user:
    - the **key takeaways** from the source;
