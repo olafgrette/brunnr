@@ -68,12 +68,12 @@ seed() {  # seed TEMPLATE DEST — render templates/TEMPLATE into DEST if absent
 echo "wiki-kit-init: installing into $TARGET  (mode: $MODE, kit: $KIT)"
 
 # --- Schema owned by the kit (always refreshed) ---
-place "$KIT/AGENTS.md"  "$TARGET/AGENTS.md"
+place "$KIT/vault-AGENTS.md" "$TARGET/AGENTS.md"
 place "$KIT/procedures" "$TARGET/procedures"
 
 # CLAUDE.md mirrors AGENTS.md so Claude Code picks up the schema.
 rm -f "$TARGET/CLAUDE.md"
-if [ "$MODE" = symlink ]; then ln -s AGENTS.md "$TARGET/CLAUDE.md"; else cp "$KIT/AGENTS.md" "$TARGET/CLAUDE.md"; fi
+if [ "$MODE" = symlink ]; then ln -s AGENTS.md "$TARGET/CLAUDE.md"; else cp "$KIT/vault-AGENTS.md" "$TARGET/CLAUDE.md"; fi
 
 # Claude Code shims — each skill delegates to procedures/.
 mkdir -p "$TARGET/.claude/skills"

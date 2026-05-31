@@ -1,142 +1,40 @@
-# Wiki Schema
+# wiki-kit — working on this repo
 
-This document defines how an LLM-maintained knowledge wiki is structured and how to operate it. It is **generic and shared across vaults** (managed by [wiki-kit](./README.md)). **Read this before any operation on the wiki — and also read `VAULT.md` for this vault's specific scope and domain conventions.**
+This file is for agents working **on wiki-kit itself**. wiki-kit is an agent-agnostic toolkit for LLM-maintained knowledge wikis (Karpathy's "LLM Wiki" pattern): a schema, operation playbooks, per-agent shims, and an installer.
 
-The pattern is based on Andrej Karpathy's "LLM Wiki" idea: the LLM incrementally builds and maintains a persistent, interlinked markdown knowledge base instead of re-deriving knowledge from raw sources on every query. The wiki is a compounding artifact — cross-references already exist, contradictions are already flagged, the synthesis already reflects everything read.
+> [!IMPORTANT]
+> This `AGENTS.md` is **not** installed into vaults. The file that becomes a vault's `AGENTS.md`/`CLAUDE.md` is **`vault-AGENTS.md`**. When you mean to change how a *vault agent* behaves, edit `vault-AGENTS.md` (or `procedures/`), not this file.
 
-## Directory structure
+See `README.md` for the user-facing overview.
 
-```
-vault/
-├── raw/              # Immutable source documents — read only, never modify
-├── wiki/             # LLM-maintained knowledge pages — you write this layer
-│   ├── index.md      # Master catalog of all wiki pages
-│   └── log.md        # Append-only operation log
-├── procedures/       # Operation playbooks — read the relevant one before acting (from wiki-kit)
-│   ├── ingest.md
-│   ├── query.md
-│   └── lint.md
-├── AGENTS.md         # This file — generic schema (from wiki-kit)
-├── VAULT.md          # This vault's scope & domain notes (local; never from wiki-kit)
-├── CLAUDE.md         # Mirror of AGENTS.md (symlink, or copy where symlinks aren't supported)
-└── .claude/skills/   # Optional Claude Code shims that delegate to procedures/ (from wiki-kit)
-```
+## What this repo produces
 
-## Layers
+`bin/wiki-kit-init` installs a schema + playbooks into a **vault** (a directory with `raw/` sources and an LLM-maintained `wiki/`). A vault receives: `AGENTS.md` (from `vault-AGENTS.md`), a `CLAUDE.md` mirror, `procedures/`, Claude Code shims under `.claude/skills/`, and seeded `VAULT.md` + `wiki/{index,log}.md`.
 
-**raw/** — curated source material. Notes, articles, exports, transcripts, images. Immutable. You read these; you never modify them. This is the source of truth. Subdirectories are fine and mirror the original structure of sources.
+## Repo layout & lifecycle
 
-**Raw file format convention**: When saving a source to `raw/`, prefer markdown over binary or HTML formats. Use `markitdown` as the default conversion tool — it handles HTML, PDF, DOCX, PPTX, images, and most common formats in one command:
+| Path | Role | Goes into a vault? |
+|---|---|---|
+| `AGENTS.md` | This file — guidance for working on wiki-kit | no |
+| `README.md` | User-facing overview | no |
+| `vault-AGENTS.md` | The schema that becomes each vault's `AGENTS.md`/`CLAUDE.md` | yes — **refresh-always** (re-placed every init) |
+| `procedures/{ingest,query,lint}.md` | Operation playbooks agents read at action time | yes — refresh-always |
+| `shims/<agent>/` | Per-agent adapters delegating to `procedures/` (now: `claude-code/`) | yes — refresh-always |
+| `templates/{VAULT.md,index.md,log.md}` | Seeds for vault-local files (`{{DATE}}` → today) | yes — **seed-once**, never overwritten; the vault owns them after |
+| `bin/wiki-kit-init` | Installer (symlink, with copy fallback) | no |
 
-```bash
-markitdown source.html > source.md   # or any other supported format
-```
+The lifecycle split is the key invariant: **refresh-always** files are kit-owned and must not be hand-edited inside a vault (edits are clobbered on re-init); **seed-once** files are the vault's to edit.
 
-After conversion, delete the original non-markdown file. Always include a YAML frontmatter block with the following fields to support ACM-style citations and ingestion tracking:
+## Where to make a change
 
-```yaml
----
-title: "Full Title of the Source"
-authors: ["Author Name 1", "Author Name 2"]
-source_type: paper | webpage | book | transcript | etc
-publication: "Journal, Conference, or Publisher Name"
-year: YYYY
-volume: "Vol #"          # if applicable
-issue: "Issue #"         # if applicable
-pages: "Start-End"       # if applicable
-doi: "10.xxxx/xxxx"      # if applicable
-url: https://example.com/original-url
-ingested_at: YYYY-MM-DD
----
+- Vault-agent behavior / conventions / division of labor → `vault-AGENTS.md`
+- What an operation does, step by step → `procedures/*.md`
+- A new agent's ergonomics (slash commands, auto-trigger) → add `shims/<agent>/` and teach `wiki-kit-init` to install it. Keep shims **thin** — they only point at `procedures/`; the portable logic stays in the procedures.
+- What a fresh vault starts with → `templates/*`
 
-# Article title
+## Conventions
 
-Article body...
-```
-
-This makes raw files readable by future agents doing wiki linting or ingestion without needing format-specific parsers.
-
-**wiki/** — your output layer. Summaries, entity pages, concept pages, comparisons, syntheses. You write and maintain everything here. The human reads this layer; the LLM writes it.
-
-**AGENTS.md** (this file) — the generic schema, shared across vaults via wiki-kit. **Don't edit it inside a vault** — your changes are overwritten on the next `wiki-kit-init`. Edit it in the wiki-kit repo instead. Vault-specific conventions belong in `VAULT.md`.
-
-**VAULT.md** — this vault's domain: what it's about, its categories, any vault-specific conventions or scope notes. Local to the vault, never overwritten by wiki-kit. Read it alongside this file before any operation.
-
-## Page conventions
-
-Every wiki page is a markdown file in `wiki/`. Conventions:
-
-- **Filename**: lowercase, hyphenated, descriptive. `nicotine-withdrawal.md`, `faye.md`, `house-electrical.md`.
-- **Title**: H1 at the top, matching the concept or entity name.
-- **Summary**: 1–3 sentences immediately after the title, before any sections.
-- **Sections**: H2 for major sections. Common choices: `## Background`, `## Key facts`, `## Timeline`, `## Open questions`, `## Sources`.
-- **Cross-references**: Use Obsidian wikilinks `[[page-name]]` or `[[page-name|alias]]` to link between wiki pages. Link liberally.
-- **Semantic Metadata**: For structured relationships, use the Dataview `Key:: [[Link]]` format within the body. Example: `Partner:: [[faye]]`, `Member of:: [[tech-skeptics]]`.
-- **Frontmatter**: Every wiki page MUST include a YAML frontmatter block (Obsidian Properties). Required fields:
-  ```yaml
-  ---
-  tags: [category/subcategory]
-  created: YYYY-MM-DD
-  updated: YYYY-MM-DD
-  type: entity | concept | synthesis | summary
-  ---
-  ```
-- **Callouts**: Use Obsidian callout syntax for emphasis: `> [!INFO]`, `> [!QUOTE]`, `> [!WARNING]`, `> [!NOTE]`.
-
-## Division of labor
-
-The human curates sources, **directs the analysis**, and decides what matters. The LLM does the bookkeeping — reading, summarizing, cross-referencing, filing, maintaining consistency. **Doing the bookkeeping is not the same as making the editorial calls.** Framing, emphasis, what to file where, how to classify a source, which contradictions matter — these are the human's to direct. When an operation turns on one of those calls, **propose and wait; don't decide silently and execute.**
-
-> [!WARNING] The default failure mode to avoid
-> Reading a source and autonomously writing a dozen pages before the human has steered the analysis. "The LLM does everything" means the LLM does all the *work* — it does not mean the LLM makes all the *decisions*. When in doubt, surface the choice and wait.
-
-**The conversation is content, not scaffolding.** The discussion between the LLM and the human — the takeaways surfaced, the framing the human chooses, the connections and disagreements that come up — is itself a meaningful part of the wiki's value, not throwaway chat. Capture it: fold the human's framing and insights into the pages you write, and record notable direction, reasoning, or disagreement in the relevant page (a callout or an `## Open questions` section) or in the log's `Notes:`. A synthesis should reflect the conversation that produced it, not just the source text. When a discussion produces something durable that doesn't belong on an existing page, offer to file it as its own page.
-
-## Operations
-
-Each operation has a **playbook** in `procedures/`. **Before performing an operation, read its playbook in full and follow it — don't work from memory.** The playbooks reference the `index.md` and `log.md` formats below.
-
-| When the user… | Read & follow |
-|---|---|
-| adds a source to `raw/`, or says "ingest this" | `procedures/ingest.md` |
-| asks a question the wiki should answer | `procedures/query.md` |
-| asks to health-check / audit / lint the wiki | `procedures/lint.md` |
-
-## index.md format
-
-The master catalog. Keep it current on every ingest. Structure:
-
-```markdown
-# Index
-
-_Last updated: YYYY-MM-DD. N sources ingested._
-
-## People
-- [Name](./name.md) — one-line description
-
-## Concepts
-- [Concept](./concept.md) — one-line description
-
-## Sources (summaries)
-- [source-title](./source-title-summary.md) — one-line description
-
-## Meta
-- [Log](./log.md) — operation history
-```
-
-One-liners should be under 120 characters. Add categories as the wiki grows.
-
-## log.md format
-
-Append-only. Newest entries at the bottom. Each entry starts with `## [YYYY-MM-DD] <operation> | <title>`. This makes it greppable:
-
-```bash
-grep "^## \[" wiki/log.md | tail -10
-```
-
-## Notes
-
-- The wiki is just markdown files. Where the vault is a git repo, you get version history and branching for free; where it's a synced folder (e.g. Google Drive), sync handles propagation across machines.
-- Obsidian's graph view is the best way to see the shape of the wiki — hubs, orphans, clusters.
-- When in doubt about where something belongs, create a new wiki page rather than modifying a raw source.
-- Good answers to queries are worth filing as wiki pages — explorations should compound, not disappear into chat history.
+- Keep `vault-AGENTS.md` and `procedures/` **agent-agnostic** — no Claude- or Codex-specific instructions. Vendor specifics live only in `shims/`.
+- The installer must stay **idempotent** and must never touch a vault's `raw/`, existing `wiki/` pages, or `VAULT.md`.
+- Test installer changes against a throwaway dir in **both** modes (default symlink and `--copy`) before relying on them.
+- After changing anything that's installed, remember: vaults on copy-mode filesystems (e.g. rclone gdrive) need a `wiki-kit-init` re-run to pick it up; symlinked vaults are already live.
