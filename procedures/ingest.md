@@ -6,7 +6,7 @@ Triggered when the user adds a new source to `raw/` or points you at an existing
 
 ## Steps
 
-1. **Read** the source document fully. If it isn't already in `raw/` as markdown, convert it first (prefer `markitdown`), add the source frontmatter described in `AGENTS.md`, and **move the original into `raw/.orig/`** — never delete it (conversion is lossy; the original is the source of truth).
+1. **Read** the source document fully. If it isn't already in `raw/` as markdown, convert it first (prefer `markitdown` if it's installed — otherwise ask the user rather than improvising), add the source frontmatter described in `AGENTS.md`, and **move the original into `raw/.orig/`** — never delete it (conversion is lossy; the original is the source of truth).
 
 2. **Stop, propose, and yield the turn — write nothing yet.** Present to the user:
    - the **key takeaways** from the source;

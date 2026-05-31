@@ -26,7 +26,7 @@ vault/
 
 **raw/** — curated source material. Notes, articles, exports, transcripts, images. Immutable. You read these; you never modify them. This is the source of truth. Subdirectories are fine and mirror the original structure of sources.
 
-**Raw file format convention**: When saving a source to `raw/`, prefer markdown over binary or HTML formats. Use `markitdown` as the default conversion tool — it handles HTML, PDF, DOCX, PPTX, images, and most common formats in one command:
+**Raw file format convention**: When saving a source to `raw/`, prefer markdown over binary or HTML formats. Use `markitdown` if it's available — it handles HTML, PDF, DOCX, PPTX, images, and most common formats in one command. If it isn't installed, tell the user and ask how they'd like to convert (or to install it) rather than guessing at the content:
 
 ```bash
 markitdown source.html > source.md   # or any other supported format
