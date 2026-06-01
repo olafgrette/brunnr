@@ -10,6 +10,11 @@
 
 set -u
 
+# Don't let init register qmd collections for throwaway test wells (they'd
+# linger in qmd's global DB pointing at deleted /tmp dirs). The qmd path is
+# exercised separately; here we assert init stays clean without it.
+export BRUNNR_NO_QMD=1
+
 HERE="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
 KIT="$(dirname "$HERE")"
 INIT="$KIT/bin/brunnr-init"
@@ -56,6 +61,7 @@ check "index.md is real (seed-once)"    not test -L "$V/wiki/index.md"
 check "log.md is real (seed-once)"      not test -L "$V/wiki/log.md"
 check ".brunnr.toml marker written"     test -f "$V/.brunnr.toml"
 check "marker records symlink mode"     grep -q 'install-mode = "symlink"' "$V/.brunnr.toml"
+check "no qmd keys when opted out"      not grep -q "qmd-" "$V/.brunnr.toml"
 
 # --- 2. forced copy mode ---------------------------------------------------
 V="$T/cp"; "$INIT" --copy "$V" >/dev/null 2>&1

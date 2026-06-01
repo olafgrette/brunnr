@@ -19,6 +19,18 @@ cd /path/to/your/well
 - It stamps each well with `.brunnr.toml` and **refuses to overwrite a non-brunnr directory** (one with foreign files where it would install) unless you pass `--force`.
 - It **never touches** `source/`, existing `wiki/` pages, or your `WELL.md`.
 
+## Search (optional)
+
+At small scale the playbooks just read `wiki/index.md` and the relevant pages. As a well grows, that stops scaling — so the playbooks can use [qmd](https://github.com/tobi/qmd), a local hybrid search engine (BM25 + vector + reranking over SQLite, models run on-device), to retrieve the right pages directly.
+
+- **Install:** `bun install -g @tobilu/qmd` (or `npm install -g`; needs Node ≥22).
+- **Register:** if `qmd` is on `PATH`, `brunnr-init` registers two collections per well — `<wellname>-wiki` (over `wiki/`) and `<wellname>-source` (over `source/`) — and records their names in `.brunnr.toml`. Registration only builds the keyword index; it downloads nothing.
+- **Warm the models once:** `cd /path/to/well && qmd embed`. This pulls the embedding model (~300MB) and, on first semantic/hybrid query, the reranker + query-expansion models (~2GB total), cached under `~/.cache/qmd/`. **Run it in a real terminal** — the downloader is progress-bar driven and can stall under a non-interactive shell. After that, all operations are local and fast (a no-change refresh is ~150ms).
+- **Opt out:** set `BRUNNR_NO_QMD=1` to make `brunnr-init` skip qmd entirely. Everything degrades gracefully to reading `index.md` when qmd isn't configured.
+- **Synced wells:** the collection *names* travel with the well (in `.brunnr.toml`), but qmd's index lives in `~/.cache/qmd/` — machine-local, not synced. So set qmd up **per machine**: run `brunnr-init` + `qmd embed` on each. Names are derived from the well's directory, so they resolve identically everywhere. Don't try to share qmd's SQLite index through the sync mount.
+
+The playbooks pick the command for the job: `qmd search` (keyword, no models) for the common path, `qmd vsearch` (semantic) to surface related ideas during ingest/lint, `qmd query` (hybrid+reranked) when a large well needs it. `index.md` stays the human-curated map; qmd is the machine retrieval index, not a replacement for it.
+
 ## Layout
 
 | Path | Role | Into a well? |

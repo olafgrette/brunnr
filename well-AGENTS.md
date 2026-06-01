@@ -81,6 +81,8 @@ This makes source files readable by future agents doing wiki linting or ingestio
 
 **WELL.md** — this well's domain: what it's about, its categories, any well-specific conventions or scope notes. Local to the well, never overwritten by brunnr. Read it alongside this file before any operation.
 
+**Search layer ([qmd](https://github.com/tobi/qmd), optional)** — a local retrieval index over the well, used by the operation playbooks at the moment they act. When configured, `brunnr-init` registers two collections — `<wellname>-wiki` (over `wiki/`) and `<wellname>-source` (over `source/`) — and records their names in `.brunnr.toml`. This does **not** replace `index.md`: `index.md` is the human-curated map of the wiki; qmd is the machine retrieval index that lets an agent find the right pages without reading the whole map at scale. qmd is fully optional — if it isn't installed, every playbook falls back to reading `index.md` directly. It runs entirely locally; the embedding/rerank models are a one-time download warmed by running `qmd embed` once. `qmd search` is keyword (BM25, no models); `qmd vsearch` is semantic (embedding model); `qmd query` is hybrid+reranked (all models). See the playbooks for which to use where.
+
 ## Page conventions
 
 Every wiki page is a markdown file in `wiki/`. Conventions:
