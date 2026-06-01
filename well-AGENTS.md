@@ -16,12 +16,15 @@ well/
 ├── procedures/       # Operation playbooks — read the relevant one before acting (from brunnr)
 ├── AGENTS.md         # This file — generic schema (from brunnr)
 ├── WELL.md           # This well's scope & domain notes (local; never from brunnr)
+├── pending-synthesis.md  # Captured sources not yet woven into wiki/ (local worklist)
 ├── CLAUDE.md         # Mirror of AGENTS.md
 ├── .brunnr.toml      # Marks this as a brunnr well (managed by brunnr-init)
 └── .claude/skills/   # Optional Claude Code shims (from brunnr)
 ```
 
 ## Layers
+
+A source moves through three stages: **inbox/** (dropped, raw) → **ingest** (captured into `source/`) → **synthesize** (woven into `wiki/`). Capture is mechanical; synthesis is the human-steered step. The two are separate operations so you can batch-capture now and synthesize later.
 
 **source/** — curated source material: notes, articles, exports, transcripts, images. Immutable, the source of truth. You read these, never modify them. Subdirectories are fine.
 
@@ -79,6 +82,8 @@ synced_at: YYYY-MM-DD                 # last sync date; equals ingested_at until
 
 **WELL.md** — this well's domain: what it covers, its categories, any well-specific conventions. Local, never overwritten. Read it alongside this file.
 
+**pending-synthesis.md** — a local worklist of sources ingested into `source/` but not yet synthesized into `wiki/`. `ingest` appends to it; `synthesize` drains it. Absent when nothing's pending.
+
 **Search layer ([qmd](https://github.com/tobi/qmd), optional)** — a local index over the well, used by the playbooks when they act. Setup is an agent-run step (`procedures/qmd-setup.md`), not part of `brunnr-init`, and is machine-local (set up once per machine). Don't call qmd directly — use `brunnr` from inside the well (it resolves which well from your directory):
 
 - `brunnr search-enabled` — exits 0 if search is set up here. The gate every playbook checks.
@@ -115,7 +120,7 @@ The human curates sources, **directs the analysis**, and decides what matters. T
 > [!WARNING] The failure mode to avoid
 > Reading a source and autonomously writing a dozen pages before the human has steered. "The LLM does everything" means it does all the *work*, not that it makes all the *decisions*. When in doubt, surface the choice and **end your turn** — don't ask rhetorically and barrel on in the same turn.
 
-**The conversation is content, not scaffolding.** The discussion — takeaways surfaced, framing the human chooses, connections and disagreements — is part of the wiki's value. Fold it into the pages you write, and record notable direction or disagreement in a callout, an `## Open questions` section, or the log's `Notes:`. A synthesis should reflect the conversation that produced it. When a discussion produces something durable with no home, offer to file it as its own page.
+**The conversation is content, not scaffolding.** Capture (`ingest`) is mechanical, but **synthesis** is an iterative dialogue — not a one-shot proposal. The discussion — takeaways surfaced, framing the human chooses, connections and disagreements — is part of the wiki's value. Fold it into the pages you write, and record notable direction or disagreement in a callout, an `## Open questions` section, or the log's `Notes:`. A synthesis should reflect the conversation that produced it. When a discussion produces something durable with no home, offer to file it as its own page.
 
 ## Operations
 
@@ -124,6 +129,7 @@ Each operation has a **playbook** in `procedures/`. **Read its playbook in full 
 | When the user… | Read & follow |
 |---|---|
 | adds a source to `inbox/` or `source/`, or says "ingest this" | `procedures/ingest.md` |
+| says "synthesize", or asks to write up captured / pending sources | `procedures/synthesize.md` |
 | asks to update an existing dynamic source (e.g. a repo) | `procedures/sync.md` |
 | asks a question the wiki should answer | `procedures/query.md` |
 | asks to health-check / audit / lint the wiki | `procedures/lint.md` |
@@ -159,6 +165,18 @@ Append-only, newest at the bottom. Each entry starts with `## [YYYY-MM-DD] <oper
 
 ```bash
 grep "^## \[" wiki/log.md | tail -10
+```
+
+## pending-synthesis.md format
+
+A worklist at the well root, written by `ingest` and drained by `synthesize`. Created on first ingest; delete it when nothing's pending. One line per captured source:
+
+```markdown
+# Pending synthesis
+
+Sources captured into source/ but not yet woven into wiki/. Run synthesize to process.
+
+- [Title](./source/example.md) — ingested YYYY-MM-DD
 ```
 
 ## Notes

@@ -18,7 +18,7 @@ See `README.md` for the user-facing overview.
 | `AGENTS.md` | This file — guidance for working on brunnr | no |
 | `README.md` | User-facing overview | no |
 | `well-AGENTS.md` | The schema that becomes each well's `AGENTS.md`/`CLAUDE.md` | yes — **refresh-always** |
-| `procedures/{ingest,query,lint,sync,qmd-setup,qmd-update}.md` | Operation playbooks agents read at action time | yes — refresh-always |
+| `procedures/{ingest,synthesize,query,lint,sync,qmd-setup,qmd-update}.md` | Operation playbooks agents read at action time | yes — refresh-always |
 | `shims/<agent>/` | Per-agent adapters that delegate to `procedures/` (now: `claude-code/`) | yes — refresh-always |
 | `templates/{WELL.md,index.md,log.md}` | Seeds for well-local files (`{{DATE}}` → today) | yes — **seed-once**, never overwritten |
 | `bin/brunnr` | The `brunnr` helper. `init`/`update` install wells (→ `brunnr-init`); `search-*` wrap qmd. Resolves the well from `$PWD`. | no — symlinked onto PATH |
