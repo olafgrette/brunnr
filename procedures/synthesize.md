@@ -23,7 +23,7 @@ Triggered when the user says "synthesize", "write up the pending sources", or na
    - the **entity and concept pages** the sources touch — new ones where missing, updates where they exist;
    - `wiki/index.md` — add new pages, refresh one-liners for changed ones.
 
-   **Fold the conversation in** — the human's framing, the connections drawn, the disagreements. A synthesis should reflect the discussion that produced it, not just the source text. Record notable direction in a callout, an `## Open questions` section, or the log `Notes:`.
+   **Fold the conversation in** — the human's framing, the connections drawn, the disagreements. A synthesis should reflect the discussion that produced it, not just the source text. Record notable direction in a callout, an `## Open questions` section, or the log `Notes:`. For a contradiction the human hasn't steered, **record both views** in a `> [!WARNING]` callout — don't silently pick a winner.
 
 5. **Drain the worklist.** Remove the synthesized sources from `pending-synthesis.md` (delete the file if nothing remains).
 
