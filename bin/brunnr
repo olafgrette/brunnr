@@ -61,12 +61,24 @@ case "$cmd" in
     exec "$INIT" "$@"
     ;;
   update)
+    # update always pulls the kit — that's its job, and it's useful from anywhere
+    # (e.g. your home dir). The well refresh is separate and must never *create* a
+    # well: pull first, then require an existing .brunnr.toml at the target (a given
+    # dir, else the well we're standing in) before delegating to brunnr-init.
     if [ -d "$KIT/.git" ] && command -v git >/dev/null 2>&1; then
       git -C "$KIT" pull --ff-only \
         || echo "brunnr: kit pull failed; refreshing from the current checkout." >&2
     fi
-    if [ "$#" -gt 0 ]; then exec "$INIT" "$@"; fi
-    exec "$INIT" "$(well_root)"
+    if [ "$#" -gt 0 ]; then
+      TARGET="$1"
+      if [ ! -e "$TARGET/.brunnr.toml" ]; then
+        echo "brunnr: kit updated; $TARGET is not a brunnr well (no .brunnr.toml) — use 'brunnr init' to create one." >&2
+        exit 2
+      fi
+    else
+      TARGET="$(well_root)"   # exits 2 ("not inside a brunnr well") after the pull
+    fi
+    exec "$INIT" "$TARGET"
     ;;
 esac
 

@@ -160,6 +160,10 @@ if command -v git >/dev/null 2>&1; then
   printf 'TAMPERED\n' > "$VI/AGENTS.md"
   check "brunnr update refreshes the well"    env -C "$VI" brunnr update
   check "update re-placed the schema"         h1 "$VI/AGENTS.md" "# Wiki Schema"
+  # update must refuse to create a well: outside any well, and on a non-well target.
+  check "update outside a well refuses"       not env -C "$T" brunnr update
+  check "update on a non-well dir refuses"    not brunnr update "$T/notawell"
+  check "update didn't create a well there"   not test -e "$T/notawell/.brunnr.toml"
   check "install-brunnr re-run is a no-op"    env BRUNNR_HOME="$CACHE" "$SK/bin/install-brunnr" "$SK"
 else
   echo "[install-brunnr + init/update verbs] (skipped: git unavailable)"
