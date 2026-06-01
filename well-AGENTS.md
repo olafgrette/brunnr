@@ -55,7 +55,7 @@ ingested_at: YYYY-MM-DD
 Article body...
 ```
 
-**Pointer Sources**: For large or highly dynamic resources (like software repositories or live individual code files) that cannot or should not be fully copied and converted, use a "Pointer Source". A pointer source is a markdown file in `source/` that acts as a proxy, containing a high-level snapshot or architectural/functional summary rather than verbatim contents. It MUST include specific frontmatter to track the external state:
+**Pointer Sources**: For large or highly dynamic resources (like software repositories or live individual code files) that cannot or should not be fully copied and converted, use a "Pointer Source". A pointer source is a markdown file in `source/` that acts as a proxy, containing a high-level snapshot or architectural/functional summary rather than verbatim contents. Because a pointer source is deliberately *not* a verbatim copy, it is exempt from any expectation that a source mirror its external content faithfully — lint and ingest should treat the snapshot as the source of truth, refreshed via `procedures/sync.md`. It MUST include specific frontmatter to track the external state:
 
 ```yaml
 ---
@@ -63,8 +63,9 @@ title: "Project Brunnr Codebase"
 source_type: repository # or live_file
 url: "https://github.com/olaf/brunnr" # if applicable
 path: "/home/olaf/workspaces/brunnr"  # local path if applicable
-tracked_commit: "a1b2c3d"             # git commit hash (or file hash) at time of ingestion
-ingested_at: YYYY-MM-DD
+tracked_commit: "a1b2c3d"             # git commit id at last sync. For a live_file, the commit id of the repo it lives in (a version-controlled file, not a loose blob — track it by commit, never by content hash).
+ingested_at: YYYY-MM-DD               # first ingestion date; never changes
+synced_at: YYYY-MM-DD                 # last sync date; equals ingested_at until the first sync
 ---
 
 # Snapshot Summary
