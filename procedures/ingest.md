@@ -2,12 +2,13 @@
 
 Read this before ingesting a source. It enforces the **Division of labor** principle in `AGENTS.md`, and references the `index.md` / `log.md` formats defined there.
 
-Triggered when the user adds a new source to `source/` or points you at an existing one.
+Triggered when the user adds a new source to `inbox/` or `source/`, or points you at an existing one.
 
 ## Steps
 
 1. **Read** the source document fully. 
-   - **Static Sources:** If it isn't already in `source/` as markdown, convert it first (prefer `markitdown` if it's installed — otherwise ask the user rather than improvising), add the source frontmatter described in `AGENTS.md`, and **move the original into `source/.orig/`** — never delete it (conversion is lossy; the original is the source of truth).
+   - **From `inbox/`**: if it's already a markdown file, it's most efficient to use bash to `mv` the file to `source/.orig/` and `cp` it to `source/`, then edit the `source/` copy to ensure the frontmatter is correct and well-formatted.
+   - **Static Sources**: If it isn't already in `source/` as markdown, convert it first (prefer `markitdown` if it's installed — otherwise ask the user rather than improvising), add the source frontmatter described in `AGENTS.md`, and **move the original into `source/.orig/`** — never delete it (conversion is lossy; the original is the source of truth).
    - **Dynamic/Large Sources (e.g., Repositories, live files):** Do not copy the entire resource. Instead, create a **Pointer Source** in `source/` (e.g., `source/my-repo.md`). Perform a high-level analysis of the external resource (using tree, reading readmes, or exploring structure) to generate an architectural/functional or structural snapshot. Populate the file with the required Pointer frontmatter (including `tracked_commit` — a git commit id; for a live file, the commit id of the repo it lives in) and write the snapshot into the body.
 
    - **Check for overlap and related ideas first (if qmd is set up):** before proposing, search both collections so your plan connects to what's already here instead of duplicating it. Use `qmd search "<key terms>"` for exact-topic hits and **`qmd vsearch "<themes/claims>"` for semantically related ideas that share no keywords** — the latter is what surfaces connections worth drawing in the new pages. Run both against `-c <wellname>-wiki` and `-c <wellname>-source`. (Detect qmd with `qmd collection list`; see `procedures/qmd-setup.md`.)

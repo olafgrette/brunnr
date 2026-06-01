@@ -45,6 +45,7 @@ check "claude shim installed"           test -f "$V/.claude/skills/wiki-ingest/S
 check "wiki-sync shim installed"        test -f "$V/.claude/skills/wiki-sync/SKILL.md"
 check "qmd-setup shim installed"        test -f "$V/.claude/skills/qmd-setup/SKILL.md"
 check "source/ created"                    test -d "$V/source"
+check "inbox/ created"                     test -d "$V/inbox"
 check "WELL.md seeded"                 test -f "$V/WELL.md"
 check "wiki/index.md seeded"            test -f "$V/wiki/index.md"
 check "wiki/log.md seeded"              test -f "$V/wiki/log.md"

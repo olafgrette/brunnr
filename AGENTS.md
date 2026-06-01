@@ -9,7 +9,7 @@ See `README.md` for the user-facing overview.
 
 ## What this repo produces
 
-`bin/brunnr-init` installs a schema + playbooks into a **well** (a directory with `source/` documents and an LLM-maintained `wiki/`). A well receives: `AGENTS.md` (from `well-AGENTS.md`), a `CLAUDE.md` mirror, `procedures/`, Claude Code shims under `.claude/skills/`, and seeded `WELL.md` + `wiki/{index,log}.md`.
+`bin/brunnr-init` installs a schema + playbooks into a **well** (a directory with `source/` documents, an `inbox/` staging area, and an LLM-maintained `wiki/`). A well receives: `AGENTS.md` (from `well-AGENTS.md`), a `CLAUDE.md` mirror, `procedures/`, Claude Code shims under `.claude/skills/`, and seeded `WELL.md`, `inbox/`, and `wiki/{index,log}.md`.
 
 ## Repo layout & lifecycle
 

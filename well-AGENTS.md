@@ -9,6 +9,7 @@ The pattern is based on Andrej Karpathy's "LLM Wiki" idea: the LLM incrementally
 ```
 well/
 ├── source/              # Immutable source documents — read only, never modify
+├── inbox/               # Staging area for new sources to be ingested
 ├── wiki/             # LLM-maintained knowledge pages — you write this layer
 │   ├── index.md      # Master catalog of all wiki pages
 │   └── log.md        # Append-only operation log
@@ -29,6 +30,8 @@ well/
 ## Layers
 
 **source/** — curated source material. Notes, articles, exports, transcripts, images. Immutable. You read these; you never modify them. This is the source of truth. Subdirectories are fine and mirror the original structure of sources.
+
+**inbox/** — staging area for new sources. The user places files here that they want to ingest. When ingesting a markdown file from the inbox, it's most efficient to use bash to `mv` it to `source/.orig/` and `cp` it to `source/`, then edit the `source/` copy to ensure the frontmatter is correct and well-formatted.
 
 **Source file format convention**: When saving a source to `source/`, prefer markdown over binary or HTML formats. Use `markitdown` if it's available — it handles HTML, PDF, DOCX, PPTX, images, and most common formats in one command. If it isn't installed, tell the user and ask how they'd like to convert (or to install it) rather than guessing at the content:
 
@@ -122,7 +125,7 @@ Each operation has a **playbook** in `procedures/`. **Before performing an opera
 
 | When the user… | Read & follow |
 |---|---|
-| adds a source to `source/`, or says "ingest this" | `procedures/ingest.md` |
+| adds a source to `inbox/` or `source/`, or says "ingest this" | `procedures/ingest.md` |
 | asks to update an existing dynamic source (like a repo) | `procedures/sync.md` |
 | asks a question the wiki should answer | `procedures/query.md` |
 | asks to health-check / audit / lint the wiki | `procedures/lint.md` |

@@ -146,7 +146,7 @@ for d in "$KIT"/shims/claude-code/*/; do
 done
 
 # --- Well-local files: seeded from templates/ on first run, never overwritten ---
-mkdir -p "$TARGET/source" "$TARGET/wiki"
+mkdir -p "$TARGET/source" "$TARGET/wiki" "$TARGET/inbox"
 seed WELL.md "$TARGET/WELL.md"
 seed index.md "$TARGET/wiki/index.md"
 seed log.md   "$TARGET/wiki/log.md"
