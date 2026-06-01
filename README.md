@@ -1,63 +1,60 @@
 # brunnr
 
-Agent-agnostic schema and operation playbooks for LLM-maintained knowledge wikis, based on Andrej Karpathy's [LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f) pattern. For my own personal use, but posted publicly. I don't expect anyone else to use this and defaults/evolution/improvements will be for explicitly my workflow.
+Agent-agnostic schema and playbooks for LLM-maintained knowledge wikis, based on Andrej Karpathy's [LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f) pattern. Built for my own use, posted publicly. The defaults follow my workflow; I don't expect anyone else to use it.
 
-A **well** is a directory with `source/` (immutable sources) and `wiki/` (LLM-maintained pages). This repo holds the shared brain — the schema (`well-AGENTS.md`), the operation playbooks (`procedures/`), and per-agent shims (`shims/`) — so you can run the same disciplined wiki workflow across many wells and machines without copy-paste drift.
+A **well** is a directory with `source/` (immutable sources you add) and `wiki/` (pages the LLM writes and maintains). This repo is the shared brain — the schema (`well-AGENTS.md`), the operation playbooks (`procedures/`), and per-agent shims (`shims/`) — so the same wiki workflow runs across many wells and machines without copy-paste drift.
 
 ## Install
 
 ```sh
-# bootstrap once per machine: clone the kit + put `brunnr` on your PATH
+# once per machine: clone the kit and put `brunnr` on your PATH
 curl -fsSL https://raw.githubusercontent.com/olafgrette/brunnr/main/bin/install-brunnr | bash
-# …or clone yourself and run bin/install-brunnr
 
 # then, inside each well:
 cd /path/to/your/well
-brunnr init                  # or: brunnr init /path/to/well
+brunnr init
 ```
 
-`install-brunnr` clones the kit into `~/.cache/brunnr` (override with `BRUNNR_HOME`) and symlinks the `brunnr` helper into `~/.local/bin`. Re-run it any time to update the checkout. `brunnr update` (run inside a well) fast-forwards the kit and re-installs that well in one step; `brunnr-init` also warns when the checkout has fallen behind its upstream.
+`install-brunnr` clones the kit into `~/.cache/brunnr` (override with `BRUNNR_HOME`) and symlinks the `brunnr` helper into `~/.local/bin`.
 
-`brunnr init` (a thin front-end for `brunnr-init`) installs the schema (`well-AGENTS.md`, placed as the well's `AGENTS.md`), `procedures/`, a `CLAUDE.md` mirror, and the Claude Code shims into the well, and seeds `WELL.md` + an empty `wiki/` skeleton on first run.
+- **`brunnr init [DIR]`** — install the schema, playbooks, and shims into a well (current directory by default). Seeds `WELL.md` and an empty `wiki/` on first run.
+- **`brunnr update [DIR]`** — pull the latest kit. Run it anywhere; if you're inside a well it refreshes that well too. It never *creates* a well — use `init` for that.
 
-- **By default it symlinks**, so kit updates propagate live (`git pull` in the kit and every symlinked well is current).
-- On filesystems that can't symlink (e.g. an **rclone Google Drive mount**) it **falls back to copying**; re-run `brunnr-init` after updating the kit to refresh copy-mode wells. The chosen mode is recorded in `.brunnr.toml` and reused on re-init — so a synced well stays consistent across machines — and you can override with `--symlink` / `--copy`.
-- It stamps each well with `.brunnr.toml` and **refuses to overwrite a non-brunnr directory** (one with foreign files where it would install) unless you pass `--force`.
-- It **never touches** `source/`, existing `wiki/` pages, or your `WELL.md`.
+`init` symlinks kit files by default, so one `update` propagates everywhere at once. On filesystems that can't symlink (e.g. an **rclone Google Drive mount**) it copies instead; re-run `init`/`update` to refresh copies. The mode is recorded in `.brunnr.toml` and reused (override with `--symlink`/`--copy`). It refuses to overwrite a non-brunnr directory unless you pass `--force`, and never touches `source/`, your existing `wiki/` pages, or `WELL.md`.
 
 ## Search (optional)
 
-At small scale the playbooks just read `wiki/index.md` and the relevant pages. As a well grows, that stops scaling — so the playbooks can use [qmd](https://github.com/tobi/qmd), a local hybrid search engine (BM25 + vector + reranking over SQLite, models run on-device), to retrieve the right pages directly.
+Small wells: the playbooks just read `wiki/index.md` and the pages it points to. As a well grows, that stops scaling — so the playbooks can use [qmd](https://github.com/tobi/qmd), a local search engine (keyword + vector + reranking, models run on-device), to find the right pages directly.
 
-Setup is **not** part of `brunnr-init` — it's a deliberate, optional step you trigger when a well is worth indexing. Install qmd, then run the `qmd-setup` procedure (`/qmd-setup` in Claude Code, or just point the agent at `procedures/qmd-setup.md`):
+Setup is opt-in, not part of `brunnr init`. Install qmd, then run the `qmd-setup` procedure (`/qmd-setup` in Claude Code):
 
-- **Install:** `bun install -g @tobilu/qmd` (or `npm install -g`; needs Node ≥22).
-- **Set up the well** (`procedures/qmd-setup.md`): registers two collections — `<wellname>-wiki` (over `wiki/`) and `<wellname>-source` (over `source/`) — attaches this well's one-line `WELL.md` summary to each as qmd *context* (returned alongside every hit, so an agent knows what it found — qmd's most useful feature), and warms the models with `qmd embed` (a one-time ~2GB download, cached under `~/.cache/qmd/`). **Run setup in a real terminal** — the model downloader is progress-bar driven and can stall under a non-interactive shell. After that, operations are local and fast (a no-change refresh is ~150ms).
-- **Opt out:** just don't run `qmd-setup`. `brunnr-init` symlinks the `brunnr` helper command onto your PATH (the wrapper agents use), but never registers collections or downloads models — setup stays agent-driven. Every playbook degrades gracefully to reading `index.md` when qmd isn't configured (detected via `brunnr search-enabled`).
-- **Synced wells:** qmd's index and models live in `~/.cache/qmd/` — machine-local, not synced. So run `qmd-setup` **per machine**. Collection names derive from the well's directory, so they resolve identically everywhere; don't try to share qmd's SQLite index through the sync mount.
+- **Install:** `bun install -g @tobilu/qmd` (or `npm install -g @tobilu/qmd`; needs Node ≥22).
+- **Set up the well:** registers two collections — `<well>-wiki` (over `wiki/`) and `<well>-source` (over `source/`) — attaches the well's one-line `WELL.md` summary to each, and downloads the embedding models (a one-time ~2GB, cached in `~/.cache/qmd/`). Run it in a real terminal — the model downloader is progress-bar driven and can stall otherwise.
+- **Per machine:** qmd's index and models are machine-local, not synced — run `qmd-setup` on each machine you use a synced well from. Collection names derive from the well's directory, so they resolve identically everywhere.
+- **Opt out:** just don't run it. Every playbook falls back to reading `index.md` (detected via `brunnr search-enabled`).
 
-The playbooks call the `brunnr` helper (`brunnr …`), which picks the qmd command for the job: `search-keyword` (BM25, no models) for the common path, `search-semantic` (vector) to surface related ideas during ingest/lint, `search-query` (hybrid+reranked) when a large well needs it. The index is refreshed via `search-refresh` after ingest/sync and before lint (`procedures/qmd-update.md`), not on every query. `index.md` stays the human-curated map; qmd is the machine retrieval index, not a replacement for it.
+The playbooks call `brunnr`, which picks the qmd command for the job: `search-keyword` (BM25, the common path), `search-semantic` (vector, for related ideas), `search-query` (hybrid + rerank, for large wells). The index is refreshed after ingest/sync and before lint via `search-refresh`, not on every query. `index.md` stays the human-curated map; qmd finds pages at scale, not a replacement for it.
 
 ## Layout
 
 | Path | Role | Into a well? |
 |---|---|---|
 | `AGENTS.md` | Guide for agents working **on brunnr** (this repo). | no |
-| `well-AGENTS.md` | The schema that becomes each well's `AGENTS.md`/`CLAUDE.md`: layers, page conventions, division of labor, the operation dispatch table. Read by every agent (Codex natively; Claude Code via the `CLAUDE.md` mirror). | yes — refreshed every init |
-| `procedures/{ingest,query,lint,sync}.md` (+ optional `qmd-setup.md`, `qmd-update.md`) | Step-by-step playbooks. Agents read the relevant one *at the moment they act* — better adherence than burying the steps in always-on context. | yes — refreshed |
-| `bin/brunnr` | The `brunnr` helper command. Install verbs (`brunnr init`/`update`) delegate to `brunnr-init`; search verbs (`brunnr search-…`) wrap qmd for the playbooks. Resolves the well from `$PWD`, so one command serves every well. | no — symlinked onto PATH |
-| `bin/install-brunnr` | Machine bootstrap: clones the kit into `~/.cache/brunnr` and symlinks `brunnr` onto PATH. Run once per machine; re-run to update. | no |
-| `shims/claude-code/` | Claude Code skills that delegate to the procedures (slash-command + auto-trigger ergonomics). Thin adapters; the portable truth lives in `procedures/`. Add `shims/<agent>/` for other agents the same way. | yes — refreshed |
-| `templates/{WELL.md,index.md,log.md}` | Seeds for well-local files on first init (`{{DATE}}` → today). The well owns and edits these afterward. | yes — seeded once, never overwritten |
-| `bin/brunnr-init` | The installer (symlink with copy fallback); invoked directly or via `brunnr init`/`update`. | no |
+| `well-AGENTS.md` | The schema each well gets as its `AGENTS.md`/`CLAUDE.md`: layers, page conventions, division of labor, the operation table. | yes — refreshed every init |
+| `procedures/*.md` | Step-by-step playbooks. Agents read the relevant one when they act. | yes — refreshed |
+| `bin/brunnr` | The `brunnr` helper. `init`/`update` install wells; `search-*` wrap qmd. Resolves the well from `$PWD`. | no — symlinked onto PATH |
+| `bin/brunnr-init` | The installer (symlink with copy fallback); invoked by `brunnr init`/`update`. | no |
+| `bin/install-brunnr` | Machine bootstrap: clone the kit, link `brunnr` onto PATH. | no |
+| `shims/claude-code/` | Claude Code skills that delegate to the procedures. Add `shims/<agent>/` for other agents. | yes — refreshed |
+| `templates/*` | Seeds for well-local files (`WELL.md`, `index.md`, `log.md`). | yes — seeded once, never overwritten |
 
 ## Shared vs. per-well
 
 | Shared (this repo) | Per-well (local, never overwritten) |
 |---|---|
-| `well-AGENTS.md`, `procedures/`, `shims/` | `WELL.md` (domain & scope), `source/`, `wiki/` |
+| `well-AGENTS.md`, `procedures/`, `shims/` | `WELL.md`, `source/`, `wiki/` |
 
-Edit the schema **here**, not inside a well — in-well copies are regenerated by `brunnr-init`.
+Edit the schema **here**, not inside a well — in-well copies are regenerated by `brunnr init`.
 
 ## License
 

@@ -1,35 +1,34 @@
 # Procedure: Ingest
 
-Read this before ingesting a source. It enforces the **Division of labor** principle in `AGENTS.md`, and references the `index.md` / `log.md` formats defined there.
+Read before ingesting a source. Enforces **Division of labor** in `AGENTS.md`; uses the `index.md` / `log.md` formats defined there.
 
-Triggered when the user adds a new source to `inbox/` or `source/`, or points you at an existing one.
+Triggered when the user adds a source to `inbox/` or `source/`, or points you at one.
 
 ## Steps
 
-1. **Read** the source document fully. 
-   - **From `inbox/`**: if it's already a markdown file, it's most efficient to use bash to `mv` the file to `source/.orig/` and `cp` it to `source/`, then edit the `source/` copy to ensure the frontmatter is correct and well-formatted.
-   - **Static Sources**: If it isn't already in `source/` as markdown, convert it first (prefer `markitdown` if it's installed — otherwise ask the user rather than improvising), add the source frontmatter described in `AGENTS.md`, and **move the original into `source/.orig/`** — never delete it (conversion is lossy; the original is the source of truth).
-   - **Dynamic/Large Sources (e.g., Repositories, live files):** Do not copy the entire resource. Instead, create a **Pointer Source** in `source/` (e.g., `source/my-repo.md`). Perform a high-level analysis of the external resource (using tree, reading readmes, or exploring structure) to generate an architectural/functional or structural snapshot. Populate the file with the required Pointer frontmatter (including `tracked_commit` — a git commit id; for a live file, the commit id of the repo it lives in) and write the snapshot into the body.
+1. **Read the source fully**, and get it into `source/` as markdown:
+   - **From `inbox/` (already markdown):** `cp` it to `source/`, `mv` the inbox file to `source/.orig/`, then fix the frontmatter on the `source/` copy.
+   - **Other static sources:** convert to markdown (prefer `markitdown`; if it's missing, ask the user — don't improvise), add the source frontmatter from `AGENTS.md`, and **move the original to `source/.orig/`** — never delete it.
+   - **Repos / live files:** don't copy the whole thing. Make a **pointer source** in `source/` — explore the resource (tree, READMEs, structure) and write an architectural/functional snapshot into the body, with the pointer frontmatter from `AGENTS.md` (including `tracked_commit`).
+   - **Check for overlap first** (if `brunnr search-enabled`): `brunnr search-keyword "<key terms>"` for exact hits, `brunnr search-semantic "<themes/claims>"` for related ideas that share no keywords. Connect your plan to what's already here instead of duplicating it.
 
-   - **Check for overlap and related ideas first (if `brunnr search-enabled`):** before proposing, search so your plan connects to what's already here instead of duplicating it. Use `brunnr search-keyword "<key terms>"` for exact-topic hits and **`brunnr search-semantic "<themes/claims>"` for semantically related ideas that share no keywords** — the latter surfaces connections worth drawing into the new pages. Both default to searching wiki + source. (See `procedures/qmd-setup.md`.)
-
-2. **Stop, propose, and yield the turn — write nothing yet.** Present to the user:
+2. **Stop, propose, and yield the turn — write nothing yet.** Present:
    - the **key takeaways** from the source;
-   - a **proposed page plan**: which wiki pages you'd create, which existing pages you'd update, and the angle/emphasis you intend to take on each;
-   - any **contradictions** with existing pages, and any **judgment calls** (classification, framing, where something belongs) you would otherwise make silently.
+   - a **page plan**: which pages you'd create, which you'd update, and the angle on each;
+   - any **contradictions** with existing pages and any **judgment calls** (classification, framing, placement).
 
-   Then **end your turn and wait.** Do not proceed to step 3, and do not call any file-writing tool (Write/Edit/etc.) in the same turn — yield back to the user and wait for their reply. Treat silence or an off-topic reply as a hard stop, never as approval. This is the user's one chance to steer the analysis before a large set of edits lands — see Division of labor in `AGENTS.md`.
+   Then **end your turn and wait.** Don't proceed to step 3, and don't call any file-writing tool in the same turn. Treat silence or an off-topic reply as a hard stop, never approval. This is the user's one chance to steer before a large set of edits lands.
 
 3. Once the user has given direction, **write**:
    - a **summary page** for the source;
-   - the **entity and concept pages** the source touches — create new pages for entities that don't have one yet, update existing ones;
-   - `wiki/index.md` — add new pages, update one-liners for modified ones.
+   - the **entity and concept pages** it touches — new ones where missing, updates where they exist;
+   - `wiki/index.md` — add new pages, refresh one-liners for changed ones.
 
-   Fold the user's framing and any insights from the discussion into the pages — the conversation is content, not scaffolding (see `AGENTS.md`). Record notable direction or disagreement in a callout, an `## Open questions` section, or the log `Notes:`.
+   Fold the user's framing and any insights from the discussion into the pages. Record notable direction or disagreement in a callout, an `## Open questions` section, or the log `Notes:`.
 
-4. **Refresh the search index** (if qmd is set up): follow `procedures/qmd-update.md` so the pages you just wrote are searchable for the next query. Skip if qmd isn't configured.
+4. **Refresh the search index** (if qmd is set up): follow `procedures/qmd-update.md` so the new pages are searchable. Skip if qmd isn't configured.
 
-5. Append an entry to `wiki/log.md`:
+5. Append to `wiki/log.md`:
    ```
    ## [YYYY-MM-DD] ingest | <source title or filename>
    Pages created: ...
@@ -37,6 +36,6 @@ Triggered when the user adds a new source to `inbox/` or `source/`, or points yo
    Notes: ...
    ```
 
-6. **Summarize** what changed and surface any judgment calls you ended up making.
+6. **Summarize** what changed and surface any judgment calls you made.
 
-A single source might touch 5–15 wiki pages. That's expected — which is exactly why the step-2 checkpoint matters.
+A single source might touch 5–15 pages. That's expected — which is why the step-2 checkpoint matters.
