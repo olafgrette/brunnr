@@ -1,13 +1,17 @@
 #!/usr/bin/env bash
 #
 # brunnr — well helper. Run from inside a brunnr well: brunnr <subcommand>.
-# A thin wrapper over qmd so agents don't hand-build per-well collection flags or
-# parse `qmd collection list`. The well is resolved from $PWD (nearest .brunnr.toml),
-# so a single command on PATH serves every well. brunnr-init symlinks this into
-# ~/.local/bin; it lives in the kit (not in the well — a synced well can sit on a
-# mount that refuses execve, so the binary stays on a normal filesystem).
+# Front-end for the two things an agent does to a well: install/refresh it (init,
+# update — delegated to the sibling brunnr-init) and search it (search-* — a thin
+# wrapper over qmd so agents don't hand-build per-well collection flags or parse
+# `qmd collection list`). The well is resolved from $PWD (nearest .brunnr.toml), so
+# a single command on PATH serves every well. install-brunnr/brunnr-init symlink
+# this into ~/.local/bin; it lives in the kit (not in the well — a synced well can
+# sit on a mount that refuses execve, so the binary stays on a normal filesystem).
 #
 # Subcommands:
+#   init   [TARGET] [opts]       install/seed a brunnr well   (-> brunnr-init)
+#   update [TARGET]              pull the kit, then refresh the well (-> brunnr-init)
 #   search-enabled               exit 0 if qmd search is set up for this well, else 1
 #   search-keyword  [T] <query>  BM25 keyword search  (qmd search)
 #   search-semantic [T] <query>  vector / related     (qmd vsearch)
@@ -34,11 +38,39 @@ well_root() {
   exit 2
 }
 
+# Resolve this script's real location (following symlinks) to find the sibling
+# brunnr-init and the kit root for git operations. Installs use absolute symlink
+# targets, so readlink returns an absolute path.
+SELF="$0"
+while [ -L "$SELF" ]; do SELF="$(readlink "$SELF")"; done
+BIN_DIR="$(cd "$(dirname "$SELF")" && pwd)"
+INIT="$BIN_DIR/brunnr-init"
+KIT="$(cd "$BIN_DIR/.." && pwd)"
+
 cmd="${1:-}"; shift || true
 
 # Help needs no well context; resolve the well only for the operating subcommands.
 case "$cmd" in ""|-h|--help|help) usage; exit 0 ;; esac
 
+# init/update are install operations — they delegate to brunnr-init (kept separate)
+# rather than reimplementing placement here. init creates/refreshes a well at the
+# given target ($PWD by default, per brunnr-init); update fast-forwards the kit
+# checkout first, then refreshes the well you're standing in (or a given target).
+case "$cmd" in
+  init)
+    exec "$INIT" "$@"
+    ;;
+  update)
+    if [ -d "$KIT/.git" ] && command -v git >/dev/null 2>&1; then
+      git -C "$KIT" pull --ff-only \
+        || echo "brunnr: kit pull failed; refreshing from the current checkout." >&2
+    fi
+    if [ "$#" -gt 0 ]; then exec "$INIT" "$@"; fi
+    exec "$INIT" "$(well_root)"
+    ;;
+esac
+
+# Remaining subcommands (search-*) operate on the current well.
 ROOT="$(well_root)"
 WELL="$(basename "$ROOT")"
 

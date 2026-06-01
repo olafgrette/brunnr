@@ -173,3 +173,16 @@ echo "brunnr-init: done (mode: $MODE)."
 if [ "$MODE" = copy ]; then
   echo "  note: copy mode — re-run brunnr-init after updating the kit to refresh this well."
 fi
+
+# Best-effort, offline: warn if the kit checkout is behind its tracked upstream.
+# A real `git fetch` would add network latency to every init; this only compares
+# against refs already fetched, so it's instant and safe (also in tests, where the
+# kit is a local clone). The actual pull lives in `brunnr update`.
+if command -v git >/dev/null 2>&1 && [ -d "$KIT/.git" ]; then
+  if up="$(git -C "$KIT" rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null)"; then
+    behind="$(git -C "$KIT" rev-list --count "HEAD..$up" 2>/dev/null || echo 0)"
+    if [ "${behind:-0}" -gt 0 ]; then
+      echo "brunnr-init: kit is $behind commit(s) behind $up — run 'brunnr update' to pull and refresh." >&2
+    fi
+  fi
+fi

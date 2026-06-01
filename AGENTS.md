@@ -18,7 +18,8 @@ See `README.md` for the user-facing overview.
 | `AGENTS.md` | This file — guidance for working on brunnr | no |
 | `README.md` | User-facing overview | no |
 | `well-AGENTS.md` | The schema that becomes each well's `AGENTS.md`/`CLAUDE.md` | yes — **refresh-always** (re-placed every init) |
-| `bin/brunnr` | The `brunnr` helper command — a qmd wrapper (`brunnr search-…`) the playbooks call. `brunnr-init` symlinks it into `~/.local/bin`; it resolves the well from `$PWD`, so one command serves every well. Distinct from `bin/brunnr-init` (the installer). | no — symlinked onto PATH, never copied into the well |
+| `bin/brunnr` | The `brunnr` helper command. Install verbs (`brunnr init`/`update`) delegate to `bin/brunnr-init`; search verbs (`brunnr search-…`) wrap qmd for the playbooks. Resolves the well from `$PWD`, so one command serves every well. | no — symlinked onto PATH, never copied into the well |
+| `bin/install-brunnr` | Machine bootstrap: clones the kit into `~/.cache/brunnr` and symlinks `brunnr` onto PATH. Run once per machine; re-run to update. | no |
 | `procedures/{ingest,query,lint}.md` | Operation playbooks agents read at action time | yes — refresh-always |
 | `shims/<agent>/` | Per-agent adapters delegating to `procedures/` (now: `claude-code/`) | yes — refresh-always |
 | `templates/{WELL.md,index.md,log.md}` | Seeds for well-local files (`{{DATE}}` → today) | yes — **seed-once**, never overwritten; the well owns them after |

@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+#
+# install-brunnr — bootstrap brunnr on a machine.
+#
+# Clones (or fast-forwards) the brunnr kit into a machine-local checkout and
+# symlinks the `brunnr` helper onto your PATH. Run once per machine; re-run any
+# time to update. Idempotent. After this, use `brunnr init` inside a well.
+#
+# The checkout lives on a normal filesystem (not in a synced well) on purpose: a
+# well may sit on a mount that refuses execve, so the executable stays here and
+# `brunnr` resolves the well from $PWD.
+#
+# Usage:
+#   install-brunnr [REPO]           # REPO: git URL or local path to clone from
+#
+# Env:
+#   BRUNNR_HOME   checkout location           (default: ~/.cache/brunnr)
+#   BRUNNR_REPO   default repo when no REPO arg given
+#                 (default: https://github.com/olafgrette/brunnr.git)
+
+set -euo pipefail
+
+REPO="${1:-${BRUNNR_REPO:-https://github.com/olafgrette/brunnr.git}}"
+DEST="${BRUNNR_HOME:-$HOME/.cache/brunnr}"
+BIN_LINK="$HOME/.local/bin/brunnr"
+
+command -v git >/dev/null 2>&1 || { echo "install-brunnr: git is required." >&2; exit 1; }
+
+if [ -d "$DEST/.git" ]; then
+  echo "install-brunnr: updating $DEST"
+  git -C "$DEST" pull --ff-only
+elif [ -e "$DEST" ]; then
+  echo "install-brunnr: $DEST exists but isn't a git checkout — leaving it. Set BRUNNR_HOME or remove it." >&2
+  exit 1
+else
+  echo "install-brunnr: cloning $REPO -> $DEST"
+  mkdir -p "$(dirname "$DEST")"
+  git clone "$REPO" "$DEST"
+fi
+
+mkdir -p "$HOME/.local/bin"
+if [ -e "$BIN_LINK" ] && [ ! -L "$BIN_LINK" ]; then
+  echo "install-brunnr: $BIN_LINK exists and isn't a symlink — leaving it." >&2
+  exit 1
+fi
+ln -sfn "$DEST/bin/brunnr" "$BIN_LINK"
+echo "install-brunnr: linked $BIN_LINK -> $DEST/bin/brunnr"
+
+case ":$PATH:" in
+  *":$HOME/.local/bin:"*) : ;;
+  *) echo "install-brunnr: add ~/.local/bin to your PATH to use the 'brunnr' command." >&2 ;;
+esac
+
+echo "install-brunnr: done. Run 'brunnr init' inside a well to set it up."

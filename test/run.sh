@@ -131,6 +131,40 @@ echo "[PATH-symlink guard]"
 check "foreign ~/.local/bin/brunnr intact"  grep -q mine "$H2/.local/bin/brunnr"
 check "foreign brunnr not made a symlink"   not test -L "$H2/.local/bin/brunnr"
 
+# --- 8. install-brunnr bootstrap + brunnr init/update verbs ----------------
+# Build a throwaway kit from the working tree (so it carries the code under test),
+# make it a local git repo, and clone *that* — so brunnr update's `git pull
+# --ff-only` resolves against a local origin and never touches the network or the
+# real repo. Skipped if git is unavailable.
+if command -v git >/dev/null 2>&1; then
+  echo "[install-brunnr + init/update verbs]"
+  SK="$T/sandkit"; cp -R "$KIT" "$SK"; rm -rf "$SK/.git"
+  git -C "$SK" init -q
+  git -C "$SK" add -A
+  git -C "$SK" -c user.email=t@example.com -c user.name=test commit -qm init >/dev/null
+
+  CACHE="$T/cache/brunnr"
+  BRUNNR_HOME="$CACHE" "$SK/bin/install-brunnr" "$SK" >/dev/null 2>&1
+  check "install-brunnr cloned the kit"       test -d "$CACHE/.git"
+  check "install-brunnr linked brunnr"        test -L "$HOME/.local/bin/brunnr"
+  check "link points at the checkout"         test "$(readlink "$HOME/.local/bin/brunnr")" = "$CACHE/bin/brunnr"
+  check "linked brunnr runs"                  brunnr --help
+
+  # init via the verb creates a well (copy mode so we can tamper without writing
+  # through a symlink into the kit checkout).
+  VI="$T/viainit"
+  check "brunnr init creates a well"          brunnr init --copy "$VI"
+  check "init placed the schema"              h1 "$VI/AGENTS.md" "# Wiki Schema"
+  check "init wrote the marker"               test -f "$VI/.brunnr.toml"
+  # update pulls the (unchanged) local origin and refreshes the well.
+  printf 'TAMPERED\n' > "$VI/AGENTS.md"
+  check "brunnr update refreshes the well"    env -C "$VI" brunnr update
+  check "update re-placed the schema"         h1 "$VI/AGENTS.md" "# Wiki Schema"
+  check "install-brunnr re-run is a no-op"    env BRUNNR_HOME="$CACHE" "$SK/bin/install-brunnr" "$SK"
+else
+  echo "[install-brunnr + init/update verbs] (skipped: git unavailable)"
+fi
+
 # --- summary ---------------------------------------------------------------
 echo
 if [ "$fails" -eq 0 ]; then
