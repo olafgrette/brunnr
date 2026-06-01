@@ -13,7 +13,7 @@ Triggered when the user asks a question the wiki should answer.
    - **Otherwise** read `wiki/index.md` and pick the most relevant pages.
 2. Read the selected pages in full. qmd returns excerpts; the page is the source of truth — don't answer from the snippet.
 3. Synthesize an answer with **inline citations** to wiki pages (`[[page]]`) and sources.
-4. If the answer is a **durable artifact** (analysis, comparison, synthesis, a connection you found), offer to save it as a new page — explorations should compound, not disappear into chat.
+4. If the answer is a **durable artifact** (analysis, comparison, synthesis, a connection you found), offer to save it — explorations should compound, not disappear into chat. A self-contained answer can be saved as a single new page here. But when the insight spans or revises several pages — or the session became a real back-and-forth — hand off to `procedures/synthesize.md` instead: it weaves session-derived material into the wiki with the steering dialogue that change warrants.
 5. If you save a page, append to `wiki/log.md`:
    ```
    ## [YYYY-MM-DD] query | <question summary>

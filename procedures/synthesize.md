@@ -1,12 +1,14 @@
 # Procedure: Synthesize
 
-Read before weaving captured sources into the wiki. This is the **human-steered, conversational** half of ingestion — where takeaways are surfaced, framing is chosen together, and connections get drawn. Enforces **Division of labor** in `AGENTS.md`; uses the `index.md` / `log.md` formats defined there.
+Read before weaving new material — captured sources or a query/discussion — into the wiki. This is the **human-steered, conversational** step (the counterpart to mechanical `ingest`): takeaways are surfaced, framing is chosen together, and connections get drawn. Enforces **Division of labor** in `AGENTS.md`; uses the `index.md` / `log.md` formats defined there.
 
-Triggered when the user says "synthesize", "write up the pending sources", or names captured sources to process. Works from `pending-synthesis.md`.
+Triggered when the user says "synthesize", "write up the pending sources", or names captured sources to process — **or after a query/discussion session**, to fold the durable insight it produced into the wiki. The material comes from `pending-synthesis.md` (sources captured by `ingest`), the current conversation, or both.
 
 ## Steps
 
-1. **Pick the target set.** Default to everything in `pending-synthesis.md`; if the user named specific sources, process just those. Read those source files in full.
+1. **Pick the target set** — one or both of:
+   - **Pending sources:** default to everything in `pending-synthesis.md`; if the user named specific sources, process just those. Read those source files in full.
+   - **The current session:** when synthesizing after a query or discussion, the takeaways, connections, and framing from this conversation *are* the material. `pending-synthesis.md` may be empty or absent then — that's expected, not a no-op. Don't re-derive what the conversation already produced; weave it in.
 
 2. **Find what's already here.** If `brunnr search-enabled`: `brunnr search-keyword "<key terms>"` for exact hits, `brunnr search-semantic "<themes/claims>"` for related ideas that share no keywords. Otherwise read `wiki/index.md`. The goal is to connect the new material to existing pages, not duplicate them.
 
@@ -25,7 +27,7 @@ Triggered when the user says "synthesize", "write up the pending sources", or na
 
    **Fold the conversation in** — the human's framing, the connections drawn, the disagreements. A synthesis should reflect the discussion that produced it, not just the source text. Record notable direction in a callout, an `## Open questions` section, or the log `Notes:`. For a contradiction the human hasn't steered, **record both views** in a `> [!WARNING]` callout — don't silently pick a winner.
 
-5. **Drain the worklist.** Remove the synthesized sources from `pending-synthesis.md` (delete the file if nothing remains).
+5. **Drain the worklist.** Remove the synthesized sources from `pending-synthesis.md` (delete the file if nothing remains). Nothing to drain when you synthesized session content with no pending sources.
 
 6. **Refresh the search index** (if qmd is set up): follow `procedures/qmd-update.md`. Skip if qmd isn't configured.
 
