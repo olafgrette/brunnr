@@ -15,7 +15,10 @@ well/
 ├── procedures/       # Operation playbooks — read the relevant one before acting (from brunnr)
 │   ├── ingest.md
 │   ├── query.md
-│   └── lint.md
+│   ├── lint.md
+│   ├── sync.md
+│   ├── qmd-setup.md  # optional local search: one-time setup (per machine)
+│   └── qmd-update.md # optional local search: shared index-refresh sub-step
 ├── AGENTS.md         # This file — generic schema (from brunnr)
 ├── WELL.md          # This well's scope & domain notes (local; never from brunnr)
 ├── CLAUDE.md         # Mirror of AGENTS.md (symlink, or copy where symlinks aren't supported)
@@ -81,7 +84,7 @@ This makes source files readable by future agents doing wiki linting or ingestio
 
 **WELL.md** — this well's domain: what it's about, its categories, any well-specific conventions or scope notes. Local to the well, never overwritten by brunnr. Read it alongside this file before any operation.
 
-**Search layer ([qmd](https://github.com/tobi/qmd), optional)** — a local retrieval index over the well, used by the operation playbooks at the moment they act. When configured, `brunnr-init` registers two collections — `<wellname>-wiki` (over `wiki/`) and `<wellname>-source` (over `source/`) — and records their names in `.brunnr.toml`. This does **not** replace `index.md`: `index.md` is the human-curated map of the wiki; qmd is the machine retrieval index that lets an agent find the right pages without reading the whole map at scale. qmd is fully optional — if it isn't installed, every playbook falls back to reading `index.md` directly. It runs entirely locally; the embedding/rerank models are a one-time download warmed by running `qmd embed` once. `qmd search` is keyword (BM25, no models); `qmd vsearch` is semantic (embedding model); `qmd query` is hybrid+reranked (all models). See the playbooks for which to use where.
+**Search layer ([qmd](https://github.com/tobi/qmd), optional)** — a local retrieval index over the well, used by the operation playbooks at the moment they act. Setup is a deliberate, agent-run step (`procedures/qmd-setup.md`), not part of `brunnr-init`: it registers two collections — `<wellname>-wiki` (over `wiki/`) and `<wellname>-source` (over `source/`) — attaches this well's one-line description to each (returned alongside every hit so an agent knows what it found), and warms the embedding/rerank models. The index and models live under `~/.cache/qmd/` — **machine-local, not synced** — so a synced well is set up once per machine; detect whether it's configured with `qmd collection list`. This does **not** replace `index.md`: `index.md` is the human-curated map of the wiki; qmd is the machine retrieval index that lets an agent find the right pages without reading the whole map at scale. qmd is fully optional — if it isn't set up, every playbook falls back to reading `index.md` directly. `qmd search` is keyword (BM25, no models); `qmd vsearch` is semantic; `qmd query` is hybrid+reranked. The index is refreshed at write/audit time (after ingest/sync, before lint) via `procedures/qmd-update.md`, not on every query. See the playbooks for which to use where.
 
 ## Page conventions
 
@@ -123,6 +126,7 @@ Each operation has a **playbook** in `procedures/`. **Before performing an opera
 | asks to update an existing dynamic source (like a repo) | `procedures/sync.md` |
 | asks a question the wiki should answer | `procedures/query.md` |
 | asks to health-check / audit / lint the wiki | `procedures/lint.md` |
+| wants to enable/refresh local search, or set up a synced well on a new machine | `procedures/qmd-setup.md` |
 
 ## index.md format
 

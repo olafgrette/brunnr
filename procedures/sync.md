@@ -24,11 +24,13 @@ Triggered when the user asks to update or sync an existing dynamic source (e.g.,
    - **Update Wiki Pages:** Modify the entity and concept pages in `wiki/` affected by the changes.
    - `wiki/index.md` — add new pages, update one-liners for modified ones if applicable.
 
-4. Append an entry to `wiki/log.md`:
+4. **Refresh the search index** (if qmd is set up): follow `procedures/qmd-update.md` so the updated source and wiki pages are searchable. Skip if qmd isn't configured.
+
+5. Append an entry to `wiki/log.md`:
    ```
    ## [YYYY-MM-DD] sync | <source title or filename>
    Pages updated: ...
    Notes: Synced from commit <old> to <new>. <brief notes>
    ```
 
-5. **Summarize** what changed and surface any judgment calls you ended up making.
+6. **Summarize** what changed and surface any judgment calls you ended up making.

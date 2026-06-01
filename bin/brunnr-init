@@ -81,38 +81,6 @@ kit = "$KIT"
 initialized = "$init_date"
 updated = "$(date +%F)"
 EOF
-  if [ -n "${QMD_WIKI_COLLECTION:-}" ]; then
-    printf 'qmd-wiki-collection = "%s"\n' "$QMD_WIKI_COLLECTION" >> "$TARGET/.brunnr.toml"
-  fi
-  if [ -n "${QMD_SOURCE_COLLECTION:-}" ]; then
-    printf 'qmd-source-collection = "%s"\n' "$QMD_SOURCE_COLLECTION" >> "$TARGET/.brunnr.toml"
-  fi
-}
-
-# Register qmd search collections (best-effort, optional). Only fires when qmd is
-# on PATH and not opted out via BRUNNR_NO_QMD. Registration only builds the local
-# FTS index — it never downloads models — so it can't hang init. The embedding
-# models are pulled lazily on first `qmd embed`/`vsearch`/`query`; warm them once.
-register_qmd() {
-  # Carry forward any names already recorded, so a re-init without qmd present
-  # (or opted out) doesn't drop them from the marker.
-  QMD_WIKI_COLLECTION="$(toml_get qmd-wiki-collection "$TARGET/.brunnr.toml")"
-  QMD_SOURCE_COLLECTION="$(toml_get qmd-source-collection "$TARGET/.brunnr.toml")"
-  [ -n "${BRUNNR_NO_QMD:-}" ] && return 0
-  command -v qmd >/dev/null 2>&1 || return 0
-  local base; base="$(basename "$TARGET")"
-  local existing; existing="$(qmd collection list 2>/dev/null || true)"
-  add_collection() {  # name, path
-    printf '%s\n' "$existing" | grep -q "^$1 " && return 0
-    qmd collection add "$2" --name "$1" >/dev/null 2>&1 \
-      && echo "  + qmd collection $1" \
-      || echo "  ! qmd collection $1 not registered (name may be taken by another well)" >&2
-  }
-  add_collection "$base-wiki"   "$TARGET/wiki"
-  add_collection "$base-source" "$TARGET/source"
-  QMD_WIKI_COLLECTION="$base-wiki"
-  QMD_SOURCE_COLLECTION="$base-source"
-  QMD_REGISTERED=1
 }
 
 # Ownership guard: don't clobber a directory that isn't already a brunnr well
@@ -183,17 +151,10 @@ seed WELL.md "$TARGET/WELL.md"
 seed index.md "$TARGET/wiki/index.md"
 seed log.md   "$TARGET/wiki/log.md"
 
-# Register qmd collections (optional, best-effort) before recording the marker.
-register_qmd
-
-# Mark the well as brunnr-owned and record the resolved mode (+ qmd collections).
+# Mark the well as brunnr-owned and record the resolved mode.
 write_marker
 
 echo "brunnr-init: done (mode: $MODE)."
 if [ "$MODE" = copy ]; then
   echo "  note: copy mode — re-run brunnr-init after updating the kit to refresh this well."
-fi
-if [ -n "${QMD_REGISTERED:-}" ]; then
-  echo "  note: qmd collections registered. Warm the local models once (one-time ~2GB download,"
-  echo "        best run in a real terminal): cd \"$TARGET\" && qmd embed"
 fi

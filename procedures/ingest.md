@@ -10,7 +10,7 @@ Triggered when the user adds a new source to `source/` or points you at an exist
    - **Static Sources:** If it isn't already in `source/` as markdown, convert it first (prefer `markitdown` if it's installed — otherwise ask the user rather than improvising), add the source frontmatter described in `AGENTS.md`, and **move the original into `source/.orig/`** — never delete it (conversion is lossy; the original is the source of truth).
    - **Dynamic/Large Sources (e.g., Repositories, live files):** Do not copy the entire resource. Instead, create a **Pointer Source** in `source/` (e.g., `source/my-repo.md`). Perform a high-level analysis of the external resource (using tree, reading readmes, or exploring structure) to generate an architectural/functional or structural snapshot. Populate the file with the required Pointer frontmatter (including `tracked_commit` — a git commit id; for a live file, the commit id of the repo it lives in) and write the snapshot into the body.
 
-   - **Check for overlap and related ideas first (if qmd is configured):** before proposing, search both collections so your plan connects to what's already here instead of duplicating it. Use `qmd search "<key terms>"` for exact-topic hits and **`qmd vsearch "<themes/claims>"` for semantically related ideas that share no keywords** — the latter is what surfaces connections worth drawing in the new pages. Run both against `-c <wiki-collection>` and `-c <source-collection>`. (`vsearch` needs the local embedding model; if it isn't warmed, use `qmd search` alone.) Collection names are in `.brunnr.toml` (default `<wellname>-wiki` / `<wellname>-source`).
+   - **Check for overlap and related ideas first (if qmd is set up):** before proposing, search both collections so your plan connects to what's already here instead of duplicating it. Use `qmd search "<key terms>"` for exact-topic hits and **`qmd vsearch "<themes/claims>"` for semantically related ideas that share no keywords** — the latter is what surfaces connections worth drawing in the new pages. Run both against `-c <wellname>-wiki` and `-c <wellname>-source`. (Detect qmd with `qmd collection list`; see `procedures/qmd-setup.md`.)
 
 2. **Stop, propose, and yield the turn — write nothing yet.** Present to the user:
    - the **key takeaways** from the source;
@@ -26,7 +26,9 @@ Triggered when the user adds a new source to `source/` or points you at an exist
 
    Fold the user's framing and any insights from the discussion into the pages — the conversation is content, not scaffolding (see `AGENTS.md`). Record notable direction or disagreement in a callout, an `## Open questions` section, or the log `Notes:`.
 
-4. Append an entry to `wiki/log.md`:
+4. **Refresh the search index** (if qmd is set up): follow `procedures/qmd-update.md` so the pages you just wrote are searchable for the next query. Skip if qmd isn't configured.
+
+5. Append an entry to `wiki/log.md`:
    ```
    ## [YYYY-MM-DD] ingest | <source title or filename>
    Pages created: ...
@@ -34,6 +36,6 @@ Triggered when the user adds a new source to `source/` or points you at an exist
    Notes: ...
    ```
 
-5. **Summarize** what changed and surface any judgment calls you ended up making.
+6. **Summarize** what changed and surface any judgment calls you ended up making.
 
 A single source might touch 5–15 wiki pages. That's expected — which is exactly why the step-2 checkpoint matters.
