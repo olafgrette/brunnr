@@ -27,7 +27,7 @@ Triggered when the user says "synthesize", "write up the pending sources", or na
 
    **Fold the conversation in** — the human's framing, the connections drawn, the disagreements. A synthesis should reflect the discussion that produced it, not just the source text. Record notable direction in a callout, an `## Open questions` section, or the log `Notes:`. For a contradiction the human hasn't steered, **record both views** in a `> [!WARNING]` callout — don't silently pick a winner.
 
-5. **Drain the worklist.** Remove the synthesized sources from `pending-synthesis.md` (delete the file if nothing remains). Nothing to drain when you synthesized session content with no pending sources.
+5. **Drain the worklist.** Remove the synthesized sources' lines from `pending-synthesis.md`, leaving the file in place even when it's emptied to just the header. Nothing to drain when you synthesized session content with no pending sources.
 
 6. **Refresh the search index** (if qmd is set up): follow `procedures/qmd-update.md`. Skip if qmd isn't configured.
 

@@ -56,10 +56,12 @@ check "brunnr link points at kit"       test "$(readlink "$HOME/.local/bin/brunn
 check "brunnr command runs"             env -C "$V" brunnr --help
 check "brunnr resolves well from cwd"   env -C "$V" sh -c 'brunnr search-enabled; [ $? -ne 2 ]'
 check "source/ created"                    test -d "$V/source"
+check "source/.orig created"               test -d "$V/source/.orig"
 check "inbox/ created"                     test -d "$V/inbox"
 check "WELL.md seeded"                 test -f "$V/WELL.md"
 check "wiki/index.md seeded"            test -f "$V/wiki/index.md"
 check "wiki/log.md seeded"              test -f "$V/wiki/log.md"
+check "pending-synthesis.md seeded"     test -f "$V/pending-synthesis.md"
 check "index.md has today's date"       grep -q "$TODAY" "$V/wiki/index.md"
 check "no literal {{DATE}} remains"     not grep -rq "{{DATE}}" "$V/wiki"
 check "log.md notes brunnr init"        grep -q "Well initialized from brunnr" "$V/wiki/log.md"
@@ -69,6 +71,7 @@ check "shim dir is a symlink"           test -L "$V/.claude/skills/wiki-ingest"
 check "WELL.md is real (seed-once)"    not test -L "$V/WELL.md"
 check "index.md is real (seed-once)"    not test -L "$V/wiki/index.md"
 check "log.md is real (seed-once)"      not test -L "$V/wiki/log.md"
+check "pending-synthesis is real (seed-once)" not test -L "$V/pending-synthesis.md"
 check ".brunnr.toml marker written"     test -f "$V/.brunnr.toml"
 check "marker records symlink mode"     grep -q 'install-mode = "symlink"' "$V/.brunnr.toml"
 check "marker carries no qmd keys"      not grep -q "qmd-" "$V/.brunnr.toml"
@@ -90,6 +93,7 @@ printf 'MY WELL NOTES\n'              > "$V/WELL.md"        # user owns this
 printf '# Index\n\nmy custom index\n'  > "$V/wiki/index.md"  # user owns this
 printf 'a source\n'                    > "$V/source/source.md"
 printf '# A page\n'                    > "$V/wiki/apage.md"
+printf '# Pending synthesis\n\n- [x](./source/x.md) — ingested 2026-01-01\n' > "$V/pending-synthesis.md"  # user owns this
 printf 'TAMPERED\n'                    > "$V/AGENTS.md"       # kit must win here
 "$INIT" --copy "$V" >/dev/null 2>&1                          # re-run
 echo "[idempotent re-run]"
@@ -97,6 +101,7 @@ check "WELL.md preserved (seed-once)"      grep -q "MY WELL NOTES" "$V/WELL.md"
 check "index.md preserved (seed-once)"      grep -q "my custom index" "$V/wiki/index.md"
 check "source/ source preserved"               test -f "$V/source/source.md"
 check "wiki page preserved"                 test -f "$V/wiki/apage.md"
+check "pending-synthesis preserved (seed-once)" grep -q "x.md" "$V/pending-synthesis.md"
 check "AGENTS.md refreshed (refresh-always)" not grep -q "TAMPERED" "$V/AGENTS.md"
 check "AGENTS.md is the schema again"       h1 "$V/AGENTS.md" "# Wiki Schema"
 

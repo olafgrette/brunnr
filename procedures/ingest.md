@@ -11,7 +11,7 @@ Triggered when the user adds a source to `inbox/` or `source/`, or says "ingest 
    - **Other static sources:** convert to markdown (prefer `markitdown`; if it's missing, ask the user — don't improvise), add the source frontmatter from `AGENTS.md`, and **move the original to `source/.orig/`** — never delete it.
    - **Repos / live files:** make a **pointer source** in `source/` — explore the resource (tree, READMEs, structure) and write an architectural/functional snapshot into the body, with the pointer frontmatter from `AGENTS.md` (including `tracked_commit`). The snapshot *is* the source's content, so writing it is part of capture.
 
-2. **Queue each source for synthesis.** Append a line to `pending-synthesis.md` at the well root (create it if absent, using the format in `AGENTS.md`):
+2. **Queue each source for synthesis.** Append a line to `pending-synthesis.md` at the well root (seeded by `init`; format in `AGENTS.md`):
    ```
    - [Title](./source/<file>.md) — ingested YYYY-MM-DD
    ```

@@ -28,7 +28,7 @@ A source moves through three stages: **inbox/** (dropped, raw) → **ingest** (c
 
 **source/** — curated source material: notes, articles, exports, transcripts, images. Immutable, the source of truth. You read these, never modify them. Subdirectories are fine.
 
-**inbox/** — where the user drops new sources to ingest. To ingest a markdown file: `cp` it to `source/`, `mv` the inbox file to `source/.orig/`, then fix the frontmatter on the `source/` copy.
+**inbox/** — where the user drops new sources to ingest. To ingest a markdown file: `cp` it to `source/`, `mv` the inbox file to `source/.orig/` (seeded by `init`), then fix the frontmatter on the `source/` copy.
 
 **Source file format.** Save sources to `source/` as markdown, not binary or HTML. Use `markitdown` if available — it converts HTML, PDF, DOCX, PPTX, and images:
 
@@ -64,7 +64,7 @@ Article body...
 ---
 title: "Project Brunnr Codebase"
 source_type: repository # or live_file
-url: "https://github.com/olaf/brunnr" # if applicable
+url: "https://github.com/olafgrette/brunnr" # if applicable
 path: "/home/olaf/workspaces/brunnr"  # local path if applicable
 tracked_commit: "a1b2c3d"             # git commit id at last sync (for a live_file, the commit of its repo — track by commit, never content hash)
 ingested_at: YYYY-MM-DD               # first ingestion date; never changes
@@ -82,7 +82,7 @@ synced_at: YYYY-MM-DD                 # last sync date; equals ingested_at until
 
 **WELL.md** — this well's domain: what it covers, its categories, any well-specific conventions. Local, never overwritten. Read it alongside this file.
 
-**pending-synthesis.md** — a local worklist of sources ingested into `source/` but not yet synthesized into `wiki/`. `ingest` appends to it; `synthesize` drains it. Absent when nothing's pending.
+**pending-synthesis.md** — a local worklist of sources ingested into `source/` but not yet synthesized into `wiki/`. Seeded by `brunnr init`, so it's always present. `ingest` appends a line per source; `synthesize` removes lines as it drains them. When nothing's pending it's just the header — leave it in place, don't delete it.
 
 **Search layer ([qmd](https://github.com/tobi/qmd), optional)** — a local index over the well, used by the playbooks when they act. Setup is an agent-run step (`procedures/qmd-setup.md`), not part of `brunnr-init`, and is machine-local (set up once per machine). Don't call qmd directly — use `brunnr` from inside the well (it resolves which well from your directory):
 
@@ -169,7 +169,7 @@ grep "^## \[" wiki/log.md | tail -10
 
 ## pending-synthesis.md format
 
-A worklist at the well root, written by `ingest` and drained by `synthesize`. Created on first ingest; delete it when nothing's pending. One line per captured source:
+A worklist at the well root, seeded by `brunnr init`, appended to by `ingest`, and drained by `synthesize` (which removes lines, never the file). One line per captured source:
 
 ```markdown
 # Pending synthesis

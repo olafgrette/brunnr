@@ -9,7 +9,7 @@ See `README.md` for the user-facing overview.
 
 ## What this repo produces
 
-`bin/brunnr-init` installs a schema + playbooks into a **well** — a directory with `source/` documents, an `inbox/` staging area, and an LLM-maintained `wiki/`. A well receives: `AGENTS.md` (from `well-AGENTS.md`), a `CLAUDE.md` mirror, `procedures/`, Claude Code shims under `.claude/skills/`, and seeded `WELL.md`, `inbox/`, and `wiki/{index,log}.md`. It also symlinks the `brunnr` helper onto PATH — a machine convenience, not a well file.
+`bin/brunnr-init` installs a schema + playbooks into a **well** — a directory with `source/` documents, an `inbox/` staging area, and an LLM-maintained `wiki/`. A well receives: `AGENTS.md` (from `well-AGENTS.md`), a `CLAUDE.md` mirror, `procedures/`, Claude Code shims under `.claude/skills/`, and seeded `WELL.md`, `inbox/`, `source/.orig/`, `pending-synthesis.md`, and `wiki/{index,log}.md`. It also symlinks the `brunnr` helper onto PATH — a machine convenience, not a well file.
 
 ## Repo layout & lifecycle
 
@@ -20,7 +20,7 @@ See `README.md` for the user-facing overview.
 | `well-AGENTS.md` | The schema that becomes each well's `AGENTS.md`/`CLAUDE.md` | yes — **refresh-always** |
 | `procedures/{ingest,synthesize,query,lint,sync,qmd-setup,qmd-update}.md` | Operation playbooks agents read at action time | yes — refresh-always |
 | `shims/<agent>/` | Per-agent adapters that delegate to `procedures/` (now: `claude-code/`) | yes — refresh-always |
-| `templates/{WELL.md,index.md,log.md}` | Seeds for well-local files (`{{DATE}}` → today) | yes — **seed-once**, never overwritten |
+| `templates/{WELL.md,index.md,log.md,pending-synthesis.md}` | Seeds for well-local files (`{{DATE}}` → today) | yes — **seed-once**, never overwritten |
 | `bin/brunnr` | The `brunnr` helper. `init`/`update` install wells (→ `brunnr-init`); `search-*` wrap qmd. Resolves the well from `$PWD`. | no — symlinked onto PATH |
 | `bin/brunnr-init` | The installer (symlink, with copy fallback) | no |
 | `bin/install-brunnr` | Machine bootstrap: clone the kit into `~/.cache/brunnr`, link `brunnr` onto PATH | no |
