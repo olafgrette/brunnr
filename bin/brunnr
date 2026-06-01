@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+#
+# brunnr — well helper. Run from inside a brunnr well: brunnr <subcommand>.
+# A thin wrapper over qmd so agents don't hand-build per-well collection flags or
+# parse `qmd collection list`. The well is resolved from $PWD (nearest .brunnr.toml),
+# so a single command on PATH serves every well. brunnr-init symlinks this into
+# ~/.local/bin; it lives in the kit (not in the well — a synced well can sit on a
+# mount that refuses execve, so the binary stays on a normal filesystem).
+#
+# Subcommands:
+#   search-enabled               exit 0 if qmd search is set up for this well, else 1
+#   search-keyword  [T] <query>  BM25 keyword search  (qmd search)
+#   search-semantic [T] <query>  vector / related     (qmd vsearch)
+#   search-query    [T] <query>  hybrid + rerank      (qmd query)
+#   search-refresh               re-index + re-embed  (qmd update && qmd embed); no-op if unset
+#
+#   T = target collection: wiki | source | all   (default: all)
+#   Extra flags after the query (e.g. -n 10) pass through to qmd.
+
+set -euo pipefail
+
+usage() { awk 'NR==1{next} /^#/{sub(/^# ?/,""); print; next} {exit}' "$0"; }
+
+# Resolve the well root by walking up from $PWD to the nearest .brunnr.toml, so the
+# helper works from any subdirectory. Deriving it from this script's own path would
+# break under symlink installs (the file lives in the kit, which has no .brunnr.toml).
+well_root() {
+  local d="$PWD"
+  while [ "$d" != / ]; do
+    [ -e "$d/.brunnr.toml" ] && { printf '%s\n' "$d"; return 0; }
+    d="$(dirname "$d")"
+  done
+  echo "brunnr: not inside a brunnr well (no .brunnr.toml found)" >&2
+  exit 2
+}
+
+cmd="${1:-}"; shift || true
+
+# Help needs no well context; resolve the well only for the operating subcommands.
+case "$cmd" in ""|-h|--help|help) usage; exit 0 ;; esac
+
+ROOT="$(well_root)"
+WELL="$(basename "$ROOT")"
+
+# Capture `qmd status` once (empty if qmd absent). Command substitution drains the
+# output fully, avoiding SIGPIPE races: piping qmd into an early-exiting consumer
+# (grep -q / awk exit) under `set -o pipefail` intermittently kills qmd with 141.
+qmd_status() { command -v qmd >/dev/null 2>&1 || return 0; qmd status 2>/dev/null || true; }
+
+# qmd present and this well's wiki collection registered. The lighter "is qmd usable
+# at all" check; search-refresh guards on this (it's what produces the vectors).
+has_collection() {
+  command -v qmd >/dev/null 2>&1 || return 1
+  # Match the full qmd:// URI, not a bare substring: a well named "well" must not
+  # match another machine's "personal-well-wiki".
+  grep -qF "qmd://${WELL}-wiki/" <<<"$(qmd_status)"
+}
+
+# At least one vector embedded. qmd status reports a single global count (no
+# per-collection figure exists), so this is a proxy for "embeddings are warmed."
+vectors_warm() {
+  local n
+  n="$(awk -F'[^0-9]+' '/Vectors:/ {print $2; exit}' <<<"$(qmd_status)")"
+  [ -n "$n" ] && [ "$n" -gt 0 ]
+}
+
+case "$cmd" in
+  search-enabled)
+    if has_collection && vectors_warm; then exit 0; else exit 1; fi
+    ;;
+
+  search-refresh)
+    has_collection || exit 0   # qmd absent or well unregistered: silent no-op
+    qmd update
+    qmd embed
+    ;;
+
+  search-keyword|search-semantic|search-query)
+    case "$cmd" in
+      search-keyword)  verb=search  ;;
+      search-semantic) verb=vsearch ;;
+      search-query)    verb=query   ;;
+    esac
+    target=all
+    case "${1:-}" in wiki|source|all) target="$1"; shift ;; esac
+    case "$target" in
+      wiki)   flags=(-c "${WELL}-wiki") ;;
+      source) flags=(-c "${WELL}-source") ;;
+      all)    flags=(-c "${WELL}-wiki" -c "${WELL}-source") ;;
+    esac
+    if ! has_collection; then
+      echo "brunnr: qmd search not set up for '$WELL' — run 'brunnr search-refresh' or the qmd-setup procedure." >&2
+      exit 1
+    fi
+    exec qmd "$verb" --full-path "${flags[@]}" "$@"
+    ;;
+
+  *)
+    echo "brunnr: unknown subcommand: $cmd" >&2
+    usage >&2
+    exit 2
+    ;;
+esac

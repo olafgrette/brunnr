@@ -154,6 +154,21 @@ seed log.md   "$TARGET/wiki/log.md"
 # Mark the well as brunnr-owned and record the resolved mode.
 write_marker
 
+# Make the `brunnr` helper available as a PATH command (machine-level). It points at
+# the kit so updates propagate, and stays on the kit's filesystem — never inside the
+# well, which may sit on a mount (e.g. rclone gdrive) that refuses execve. The well
+# is resolved from $PWD, so one command serves every well. Best-effort: a well still
+# works without it; agents would just invoke "$KIT/bin/brunnr" by path.
+HELPER_LINK="$HOME/.local/bin/brunnr"
+if [ -e "$HELPER_LINK" ] && [ ! -L "$HELPER_LINK" ]; then
+  echo "brunnr-init: $HELPER_LINK exists and isn't a brunnr symlink — leaving it. Run brunnr via $KIT/bin/brunnr." >&2
+elif mkdir -p "$HOME/.local/bin" 2>/dev/null && ln -sfn "$KIT/bin/brunnr" "$HELPER_LINK" 2>/dev/null; then
+  echo "  linked $HELPER_LINK -> $KIT/bin/brunnr"
+  case ":$PATH:" in *":$HOME/.local/bin:"*) : ;; *) echo "  note: add ~/.local/bin to PATH to use the 'brunnr' command." >&2 ;; esac
+else
+  echo "brunnr-init: couldn't link brunnr into ~/.local/bin; run it as $KIT/bin/brunnr." >&2
+fi
+
 echo "brunnr-init: done (mode: $MODE)."
 if [ "$MODE" = copy ]; then
   echo "  note: copy mode — re-run brunnr-init after updating the kit to refresh this well."

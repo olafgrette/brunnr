@@ -9,7 +9,7 @@ See `README.md` for the user-facing overview.
 
 ## What this repo produces
 
-`bin/brunnr-init` installs a schema + playbooks into a **well** (a directory with `source/` documents, an `inbox/` staging area, and an LLM-maintained `wiki/`). A well receives: `AGENTS.md` (from `well-AGENTS.md`), a `CLAUDE.md` mirror, `procedures/`, Claude Code shims under `.claude/skills/`, and seeded `WELL.md`, `inbox/`, and `wiki/{index,log}.md`.
+`bin/brunnr-init` installs a schema + playbooks into a **well** (a directory with `source/` documents, an `inbox/` staging area, and an LLM-maintained `wiki/`). A well receives: `AGENTS.md` (from `well-AGENTS.md`), a `CLAUDE.md` mirror, `procedures/`, Claude Code shims under `.claude/skills/`, and seeded `WELL.md`, `inbox/`, and `wiki/{index,log}.md`. It also symlinks the `brunnr` helper command (`bin/brunnr`) into `~/.local/bin` — a machine-level convenience, not a well file.
 
 ## Repo layout & lifecycle
 
@@ -18,6 +18,7 @@ See `README.md` for the user-facing overview.
 | `AGENTS.md` | This file — guidance for working on brunnr | no |
 | `README.md` | User-facing overview | no |
 | `well-AGENTS.md` | The schema that becomes each well's `AGENTS.md`/`CLAUDE.md` | yes — **refresh-always** (re-placed every init) |
+| `bin/brunnr` | The `brunnr` helper command — a qmd wrapper (`brunnr search-…`) the playbooks call. `brunnr-init` symlinks it into `~/.local/bin`; it resolves the well from `$PWD`, so one command serves every well. Distinct from `bin/brunnr-init` (the installer). | no — symlinked onto PATH, never copied into the well |
 | `procedures/{ingest,query,lint}.md` | Operation playbooks agents read at action time | yes — refresh-always |
 | `shims/<agent>/` | Per-agent adapters delegating to `procedures/` (now: `claude-code/`) | yes — refresh-always |
 | `templates/{WELL.md,index.md,log.md}` | Seeds for well-local files (`{{DATE}}` → today) | yes — **seed-once**, never overwritten; the well owns them after |

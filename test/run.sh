@@ -18,6 +18,10 @@ TODAY="$(date +%F)"
 T="$(mktemp -d)"
 trap 'rm -rf "$T"' EXIT
 
+# Sandbox HOME so brunnr-init's `brunnr` PATH symlink lands here, not in the real
+# ~/.local/bin. Add it to PATH so we can exercise the installed `brunnr` command.
+export HOME="$T/home"; mkdir -p "$HOME/.local/bin"; PATH="$HOME/.local/bin:$PATH"
+
 tests=0; fails=0
 check(){ local d="$1"; shift; tests=$((tests+1))
   if "$@" >/dev/null 2>&1; then printf '  \033[32mok\033[0m   %s\n' "$d"
@@ -44,6 +48,11 @@ check "procedures/qmd-update.md present" test -f "$V/procedures/qmd-update.md"
 check "claude shim installed"           test -f "$V/.claude/skills/wiki-ingest/SKILL.md"
 check "wiki-sync shim installed"        test -f "$V/.claude/skills/wiki-sync/SKILL.md"
 check "qmd-setup shim installed"        test -f "$V/.claude/skills/qmd-setup/SKILL.md"
+check "brunnr not copied into well"     not test -e "$V/brunnr"
+check "brunnr symlinked onto PATH"      test -L "$HOME/.local/bin/brunnr"
+check "brunnr link points at kit"       test "$(readlink "$HOME/.local/bin/brunnr")" = "$KIT/bin/brunnr"
+check "brunnr command runs"             env -C "$V" brunnr --help
+check "brunnr resolves well from cwd"   env -C "$V" sh -c 'brunnr search-enabled; [ $? -ne 2 ]'
 check "source/ created"                    test -d "$V/source"
 check "inbox/ created"                     test -d "$V/inbox"
 check "WELL.md seeded"                 test -f "$V/WELL.md"
@@ -114,6 +123,13 @@ check "AGENTS.md still a real file"         not test -L "$V/AGENTS.md"
 "$INIT" --symlink "$V" >/dev/null 2>&1               # explicit flag overrides
 check "--symlink overrides recorded mode"   test -L "$V/AGENTS.md"
 check "marker updated to symlink"           grep -q 'install-mode = "symlink"' "$V/.brunnr.toml"
+
+# --- 7. PATH-symlink guard: don't clobber a foreign ~/.local/bin/brunnr -----
+H2="$T/home2"; mkdir -p "$H2/.local/bin"; printf 'mine\n' > "$H2/.local/bin/brunnr"
+HOME="$H2" "$INIT" "$T/w2" >/dev/null 2>&1
+echo "[PATH-symlink guard]"
+check "foreign ~/.local/bin/brunnr intact"  grep -q mine "$H2/.local/bin/brunnr"
+check "foreign brunnr not made a symlink"   not test -L "$H2/.local/bin/brunnr"
 
 # --- summary ---------------------------------------------------------------
 echo
