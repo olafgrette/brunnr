@@ -75,6 +75,19 @@ check "pending-synthesis is real (seed-once)" not test -L "$V/pending-synthesis.
 check ".brunnr.toml marker written"     test -f "$V/.brunnr.toml"
 check "marker records symlink mode"     grep -q 'install-mode = "symlink"' "$V/.brunnr.toml"
 check "marker carries no qmd keys"      not grep -q "qmd-" "$V/.brunnr.toml"
+check "marker defaults search to true"  grep -q 'search = "true"' "$V/.brunnr.toml"
+# search-enabled prints a status line (not just an exit code) so a bare run isn't
+# mistaken for "disabled"; without qmd it reports not-enabled and exits 1.
+check "search-enabled prints status"    env -C "$V" sh -c 'brunnr search-enabled 2>&1 | grep -q search'
+check "search-enabled exits 1 unset"    env -C "$V" sh -c 'brunnr search-enabled >/dev/null 2>&1; [ $? -eq 1 ]'
+
+# --- 1b. explicit search opt-out via .brunnr.toml --------------------------
+echo "[search opt-out]"
+sed -i 's/search = "true"/search = "false"/' "$V/.brunnr.toml"
+check "opt-out reported by status"      env -C "$V" sh -c 'brunnr search-enabled 2>&1 | grep -q disabled'
+check "opt-out: search-keyword refuses" env -C "$V" sh -c 'brunnr search-keyword wiki x >/dev/null 2>&1; [ $? -eq 1 ]'
+"$INIT" "$V" >/dev/null 2>&1
+check "re-init preserves search=false"  grep -q 'search = "false"' "$V/.brunnr.toml"
 
 # --- 2. forced copy mode ---------------------------------------------------
 V="$T/cp"; "$INIT" --copy "$V" >/dev/null 2>&1

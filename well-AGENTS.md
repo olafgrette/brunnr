@@ -86,11 +86,11 @@ synced_at: YYYY-MM-DD                 # last sync date; equals ingested_at until
 
 **Search layer ([qmd](https://github.com/tobi/qmd), optional)** — a local index over the well, used by the playbooks when they act. Setup is an agent-run step (`procedures/qmd-setup.md`), not part of `brunnr-init`, and is machine-local (set up once per machine). Don't call qmd directly — use `brunnr` from inside the well (it resolves which well from your directory):
 
-- `brunnr search-enabled` — exits 0 if search is set up here. The gate every playbook checks.
+- `brunnr search-enabled` — the gate every playbook checks. It prints a status line that says whether search is live and what to use; read that line rather than guessing from the exit code (a bare success used to look like silence). To turn search off for a well permanently, set `search = false` in its `.brunnr.toml`.
 - `brunnr search-keyword|search-semantic|search-query [wiki|source|all] "<query>"` — keyword (BM25) / vector / hybrid+reranked. Target defaults to both collections.
 - `brunnr search-refresh` — re-index + re-embed. A no-op if qmd isn't set up.
 
-If `search-enabled` is false, every playbook falls back to reading `index.md`. `index.md` stays the human-curated map; qmd finds the right pages at scale without reading the whole map. Refresh at write/audit time (after ingest/sync, before lint), not on every query.
+If `search-enabled` reports off, every playbook falls back to reading `index.md`. `index.md` stays the human-curated map; qmd finds the right pages at scale without reading the whole map. Refresh at write/audit time (after ingest/sync, before lint), not on every query.
 
 ## Page conventions
 
