@@ -2,8 +2,9 @@
 #
 # brunnr — well helper. Run from inside a brunnr well: brunnr <subcommand>.
 # Front-end for the two things an agent does to a well: install/refresh it (init,
-# update — delegated to the sibling brunnr-init) and search it (search-* — a thin
-# wrapper over qmd so agents don't hand-build per-well collection flags or parse
+# update — delegated to the sibling brunnr-init) and search it (enabled/keyword/
+# semantic/query/refresh — a thin wrapper over qmd so agents don't hand-build
+# per-well collection flags or parse
 # `qmd collection list`). The well is resolved from $PWD (nearest .brunnr.toml), so
 # a single command on PATH serves every well. install-brunnr/brunnr-init symlink
 # this into ~/.local/bin; it lives in the kit (not in the well — a synced well can
@@ -12,12 +13,12 @@
 # Subcommands:
 #   init   [TARGET] [opts]       install/seed a brunnr well   (-> brunnr-init)
 #   update [TARGET]              pull the kit, then refresh the well (-> brunnr-init)
-#   search-enabled               prints + exits 0 if qmd search is live here, else 1
-#                                (set `search = false` in .brunnr.toml to opt out)
-#   search-keyword  [T] <query>  BM25 keyword search  (qmd search)
-#   search-semantic [T] <query>  vector / related     (qmd vsearch)
-#   search-query    [T] <query>  hybrid + rerank      (qmd query)
-#   search-refresh               re-index + re-embed  (qmd update && qmd embed); no-op if unset
+#   enabled                     prints + exits 0 if qmd search is live here, else 1
+#                               (set `search = false` in .brunnr.toml to opt out)
+#   keyword  [T] <query>        BM25 keyword search  (qmd search)
+#   semantic [T] <query>        vector / related     (qmd vsearch)
+#   query    [T] <query>        hybrid + rerank      (qmd query)
+#   refresh                     re-index + re-embed  (qmd update && qmd embed); no-op if unset
 #
 #   T = target collection: wiki | source | all   (default: all)
 #   Extra flags after the query (e.g. -n 10) pass through to qmd.
@@ -83,12 +84,12 @@ case "$cmd" in
     ;;
 esac
 
-# Remaining subcommands (search-*) operate on the current well.
+# Remaining subcommands (enabled/keyword/semantic/query/refresh) operate on the current well.
 ROOT="$(well_root)"
 WELL="$(basename "$ROOT")"
 
 # Explicit opt-out: a well that will never use search sets `search = false` in its
-# .brunnr.toml. Without it, every search-enabled check nags to run qmd-setup. The
+# .brunnr.toml. Without it, every `enabled` check nags to run qmd-setup. The
 # marker preserves this key across re-inits (see brunnr-init's write_marker).
 search_opted_out() {
   local v
@@ -102,7 +103,7 @@ search_opted_out() {
 qmd_status() { command -v qmd >/dev/null 2>&1 || return 0; qmd status 2>/dev/null || true; }
 
 # qmd present and this well's wiki collection registered. The lighter "is qmd usable
-# at all" check; search-refresh guards on this (it's what produces the vectors).
+# at all" check; refresh guards on this (it's what produces the vectors).
 has_collection() {
   command -v qmd >/dev/null 2>&1 || return 1
   # Match the full qmd:// URI, not a bare substring: a well named "well" must not
@@ -119,7 +120,7 @@ vectors_warm() {
 }
 
 case "$cmd" in
-  search-enabled)
+  enabled)
     # Print a self-explanatory status, not just an exit code: an agent that runs
     # this bare reads empty output + exit 0 as "disabled". The line says which
     # mode is live and what to reach for, so callers need no extra scaffolding.
@@ -127,7 +128,7 @@ case "$cmd" in
       echo "✗ search disabled for '$WELL' (search = false in .brunnr.toml) — read wiki/index.md"
       exit 1
     elif has_collection && vectors_warm; then
-      echo "✓ search ENABLED for '$WELL' — use brunnr search-keyword / search-semantic / search-query"
+      echo "✓ search ENABLED for '$WELL' — use brunnr keyword / semantic / query"
       exit 0
     else
       echo "✗ search NOT enabled for '$WELL' — read wiki/index.md instead (run the qmd-setup procedure to enable)"
@@ -135,22 +136,22 @@ case "$cmd" in
     fi
     ;;
 
-  search-refresh)
+  refresh)
     search_opted_out && exit 0 # search = false: silent no-op
     has_collection || exit 0   # qmd absent or well unregistered: silent no-op
     qmd update
     qmd embed
     ;;
 
-  search-keyword|search-semantic|search-query)
+  keyword|semantic|query)
     if search_opted_out; then
       echo "✗ search disabled for '$WELL' (search = false in .brunnr.toml) — read wiki/index.md" >&2
       exit 1
     fi
     case "$cmd" in
-      search-keyword)  verb=search  ;;
-      search-semantic) verb=vsearch ;;
-      search-query)    verb=query   ;;
+      keyword)  verb=search  ;;
+      semantic) verb=vsearch ;;
+      query)    verb=query   ;;
     esac
     target=all
     case "${1:-}" in wiki|source|all) target="$1"; shift ;; esac
@@ -160,7 +161,7 @@ case "$cmd" in
       all)    flags=(-c "${WELL}-wiki" -c "${WELL}-source") ;;
     esac
     if ! has_collection; then
-      echo "brunnr: qmd search not set up for '$WELL' — run 'brunnr search-refresh' or the qmd-setup procedure." >&2
+      echo "brunnr: qmd search not set up for '$WELL' — run 'brunnr refresh' or the qmd-setup procedure." >&2
       exit 1
     fi
     exec qmd "$verb" --full-path "${flags[@]}" "$@"

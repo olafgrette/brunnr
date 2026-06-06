@@ -21,7 +21,7 @@ See `README.md` for the user-facing overview.
 | `procedures/{ingest,synthesize,query,lint,sync,qmd-setup,qmd-update}.md` | Operation playbooks agents read at action time | yes — refresh-always |
 | `shims/<agent>/` | Per-agent adapters that delegate to `procedures/` (now: `claude-code/`) | yes — refresh-always |
 | `templates/{WELL.md,index.md,log.md,pending-synthesis.md}` | Seeds for well-local files (`{{DATE}}` → today) | yes — **seed-once**, never overwritten |
-| `bin/brunnr` | The `brunnr` helper. `init`/`update` install wells (→ `brunnr-init`); `search-*` wrap qmd. Resolves the well from `$PWD`. | no — symlinked onto PATH |
+| `bin/brunnr` | The `brunnr` helper. `init`/`update` install wells (→ `brunnr-init`); `keyword`/`semantic`/`query`/`refresh`/`enabled` wrap qmd. Resolves the well from `$PWD`. | no — symlinked onto PATH |
 | `bin/brunnr-init` | The installer (symlink, with copy fallback) | no |
 | `bin/install-brunnr` | Machine bootstrap: clone the kit into `~/.cache/brunnr`, link `brunnr` onto PATH | no |
 

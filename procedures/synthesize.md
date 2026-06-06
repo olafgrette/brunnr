@@ -10,7 +10,7 @@ Triggered when the user says "synthesize", "write up the pending sources", or na
    - **Pending sources:** default to everything in `pending-synthesis.md`; if the user named specific sources, process just those. Read those source files in full.
    - **The current session:** when synthesizing after a query or discussion, the takeaways, connections, and framing from this conversation *are* the material. `pending-synthesis.md` may be empty or absent then — that's expected, not a no-op. Don't re-derive what the conversation already produced; weave it in.
 
-2. **Find what's already here.** If `brunnr search-enabled`: `brunnr search-keyword "<key terms>"` for exact hits, `brunnr search-semantic "<themes/claims>"` for related ideas that share no keywords. Otherwise read `wiki/index.md`. The goal is to connect the new material to existing pages, not duplicate them.
+2. **Find what's already here.** If `brunnr enabled`: `brunnr keyword "<key terms>"` for exact hits, `brunnr semantic "<themes/claims>"` for related ideas that share no keywords. Otherwise read `wiki/index.md`. The goal is to connect the new material to existing pages, not duplicate them.
 
 3. **Open a conversation about the sources — do not lead with a page plan.** The first move is to learn what the *human* took from this material, not to propose wiki structure. Jumping straight to a page proposal is the failure mode this step exists to prevent. Instead:
    - give a **short read of each source** — what it is, the gist;

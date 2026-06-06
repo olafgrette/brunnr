@@ -25,4 +25,4 @@ Triggered when the user says "set up qmd" / "enable search", or after cloning a 
 
 4. **Warm the models.** Required — semantic and hybrid search need embeddings, not just keyword. Run `qmd embed` (a one-time model download). **Run it in a real terminal**: the downloader is progress-bar driven and can stall otherwise. If you're not in one, hand the command to the user and wait.
 
-5. **Verify and report.** `brunnr search-enabled` should exit 0, and `qmd context list` should show both descriptions. A quick `brunnr search-semantic "<a topic the well covers>"` confirms hits come back. Tell the user search is set up.
+5. **Verify and report.** `brunnr enabled` should exit 0, and `qmd context list` should show both descriptions. A quick `brunnr semantic "<a topic the well covers>"` confirms hits come back. Tell the user search is set up.

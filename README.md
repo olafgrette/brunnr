@@ -31,11 +31,11 @@ Setup is opt-in, not part of `brunnr init`. Install qmd, then run the `qmd-setup
 - **Install:** `bun install -g @tobilu/qmd` (or `npm install -g @tobilu/qmd`; needs Node ≥22).
 - **Set up the well:** registers two collections — `<well>-wiki` (over `wiki/`) and `<well>-source` (over `source/`) — attaches the well's one-line `WELL.md` summary to each, and downloads the embedding models (a one-time ~2GB, cached in `~/.cache/qmd/`). Run it in a real terminal — the model downloader is progress-bar driven and can stall otherwise.
 - **Per machine:** qmd's index and models are machine-local, not synced — run `qmd-setup` on each machine you use a synced well from. Collection names derive from the well's directory (`basename`), so they resolve identically everywhere. The flip side: two wells with the same leaf name on one machine (`~/work/notes` and `~/personal/notes`) would share qmd collections — keep leaf names unique per machine.
-- **Opt out:** just don't run it — every playbook falls back to reading `index.md` (detected via `brunnr search-enabled`). To make the opt-out explicit and silence the "run qmd-setup" hint, set `search = false` in the well's `.brunnr.toml`.
+- **Opt out:** just don't run it — every playbook falls back to reading `index.md` (detected via `brunnr enabled`). To make the opt-out explicit and silence the "run qmd-setup" hint, set `search = false` in the well's `.brunnr.toml`.
 
-The playbooks call `brunnr`, which picks the qmd command for the job: `search-keyword` (BM25, the common path), `search-semantic` (vector, for related ideas), `search-query` (hybrid + rerank, for large wells). The index is refreshed after ingest/sync and before lint via `search-refresh`, not on every query. `index.md` stays the human-curated map; qmd finds pages at scale, not a replacement for it.
+The playbooks call `brunnr`, which picks the qmd command for the job: `keyword` (BM25, the common path), `semantic` (vector, for related ideas), `query` (hybrid + rerank, for large wells). The index is refreshed after ingest/sync and before lint via `refresh`, not on every query. `index.md` stays the human-curated map; qmd finds pages at scale, not a replacement for it.
 
-These wrappers parse qmd's `status` output and verb names (`search`/`vsearch`/`query`/`update`/`embed`), so a future qmd release that changes that surface **silently disables search** — every playbook just falls back to `index.md` with no error. If search stops finding things, run `brunnr search-enabled` — it prints whether search is live for the well. qmd is young; if you depend on search, note the qmd version you set up against and re-test after upgrading.
+These wrappers parse qmd's `status` output and verb names (`search`/`vsearch`/`query`/`update`/`embed`), so a future qmd release that changes that surface **silently disables search** — every playbook just falls back to `index.md` with no error. If search stops finding things, run `brunnr enabled` — it prints whether search is live for the well. qmd is young; if you depend on search, note the qmd version you set up against and re-test after upgrading.
 
 ## Layout
 
@@ -44,7 +44,7 @@ These wrappers parse qmd's `status` output and verb names (`search`/`vsearch`/`q
 | `AGENTS.md` | Guide for agents working **on brunnr** (this repo). | no |
 | `well-AGENTS.md` | The schema each well gets as its `AGENTS.md`/`CLAUDE.md`: layers, page conventions, division of labor, the operation table. | yes — refreshed every init |
 | `procedures/*.md` | Step-by-step playbooks. Agents read the relevant one when they act. | yes — refreshed |
-| `bin/brunnr` | The `brunnr` helper. `init`/`update` install wells; `search-*` wrap qmd. Resolves the well from `$PWD`. | no — symlinked onto PATH |
+| `bin/brunnr` | The `brunnr` helper. `init`/`update` install wells; `keyword`/`semantic`/`query`/`refresh`/`enabled` wrap qmd. Resolves the well from `$PWD`. | no — symlinked onto PATH |
 | `bin/brunnr-init` | The installer (symlink with copy fallback); invoked by `brunnr init`/`update`. | no |
 | `bin/install-brunnr` | Machine bootstrap: clone the kit, link `brunnr` onto PATH. | no |
 | `shims/claude-code/` | Claude Code skills that delegate to the procedures. Add `shims/<agent>/` for other agents. | yes — refreshed |

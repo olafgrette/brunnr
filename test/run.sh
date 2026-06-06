@@ -54,7 +54,7 @@ check "brunnr not copied into well"     not test -e "$V/brunnr"
 check "brunnr symlinked onto PATH"      test -L "$HOME/.local/bin/brunnr"
 check "brunnr link points at kit"       test "$(readlink "$HOME/.local/bin/brunnr")" = "$KIT/bin/brunnr"
 check "brunnr command runs"             env -C "$V" brunnr --help
-check "brunnr resolves well from cwd"   env -C "$V" sh -c 'brunnr search-enabled; [ $? -ne 2 ]'
+check "brunnr resolves well from cwd"   env -C "$V" sh -c 'brunnr enabled; [ $? -ne 2 ]'
 check "source/ created"                    test -d "$V/source"
 check "source/.orig created"               test -d "$V/source/.orig"
 check "inbox/ created"                     test -d "$V/inbox"
@@ -76,16 +76,16 @@ check ".brunnr.toml marker written"     test -f "$V/.brunnr.toml"
 check "marker records symlink mode"     grep -q 'install-mode = "symlink"' "$V/.brunnr.toml"
 check "marker carries no qmd keys"      not grep -q "qmd-" "$V/.brunnr.toml"
 check "marker defaults search to true"  grep -q 'search = "true"' "$V/.brunnr.toml"
-# search-enabled prints a status line (not just an exit code) so a bare run isn't
+# enabled prints a status line (not just an exit code) so a bare run isn't
 # mistaken for "disabled"; without qmd it reports not-enabled and exits 1.
-check "search-enabled prints status"    env -C "$V" sh -c 'brunnr search-enabled 2>&1 | grep -q search'
-check "search-enabled exits 1 unset"    env -C "$V" sh -c 'brunnr search-enabled >/dev/null 2>&1; [ $? -eq 1 ]'
+check "enabled prints status"           env -C "$V" sh -c 'brunnr enabled 2>&1 | grep -q search'
+check "enabled exits 1 unset"           env -C "$V" sh -c 'brunnr enabled >/dev/null 2>&1; [ $? -eq 1 ]'
 
 # --- 1b. explicit search opt-out via .brunnr.toml --------------------------
 echo "[search opt-out]"
 sed -i 's/search = "true"/search = "false"/' "$V/.brunnr.toml"
-check "opt-out reported by status"      env -C "$V" sh -c 'brunnr search-enabled 2>&1 | grep -q disabled'
-check "opt-out: search-keyword refuses" env -C "$V" sh -c 'brunnr search-keyword wiki x >/dev/null 2>&1; [ $? -eq 1 ]'
+check "opt-out reported by status"      env -C "$V" sh -c 'brunnr enabled 2>&1 | grep -q disabled'
+check "opt-out: keyword refuses"        env -C "$V" sh -c 'brunnr keyword wiki x >/dev/null 2>&1; [ $? -eq 1 ]'
 "$INIT" "$V" >/dev/null 2>&1
 check "re-init preserves search=false"  grep -q 'search = "false"' "$V/.brunnr.toml"
 

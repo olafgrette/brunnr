@@ -75,7 +75,7 @@ write_marker() {  # (re)write the .brunnr.toml ownership + mode marker
   local init_date; init_date="$(toml_get initialized "$TARGET/.brunnr.toml")"
   [ -n "$init_date" ] || init_date="$(date +%F)"
   # Preserve the one user-settable key across re-inits: `search = false` opts the
-  # well out of qmd search (brunnr search-enabled then reports it without nagging).
+  # well out of qmd search (brunnr enabled then reports it without nagging).
   local search; search="$(toml_get search "$TARGET/.brunnr.toml")"
   [ -n "$search" ] || search=true
   cat > "$TARGET/.brunnr.toml" <<EOF
